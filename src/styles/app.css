@@ -91,3 +91,13 @@ h5 {
 h6 {
 	font-size: var(--20px, 20px);
 }
+
+header {
+	position: relative;
+	z-index: 99;
+}
+#content {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
