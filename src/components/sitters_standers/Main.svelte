@@ -1,13 +1,30 @@
 <script>
+	import Canvas from "$components/sitters_standers/Canvas.svelte"; 
+	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
 	export let copy;
 	export let data;
+	let selectedVar = "Percent of workers, choice of sitting or standing is allowed";
+
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
-	import Canvas from "$components/sitters_standers/Canvas.svelte"; 
 	
+	function getPercentKeys(arr) {
+		if (arr.length === 0) {
+			return [];
+		}
+		const firstObject = arr[0];
+		const percentKeys = Object.keys(firstObject).filter(key => key.startsWith("Percent"));
+
+		return percentKeys;
+	}
+
+	function handlePulldownChange(event) {
+		selectedVar = event.detail.selectedVar;
+	}
 </script>
 
 <div class="container">
-	<Canvas {data}/>
+	<Pulldown data={getPercentKeys(data)} {selectedVar} on:change={handlePulldownChange} />
+	<Canvas {data} {selectedVar}/>
 </div>
 
 <style>
