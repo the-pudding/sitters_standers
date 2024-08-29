@@ -20,8 +20,10 @@
 <style>
 	#pulldown {
 		position: fixed;
-		left: 10px;
-		top: 10px;
+		left: 50%;
+		top: 50%;
+		margin-top: -20px;
+		margin-left: -300px;
 		width: 600px;
 		z-index: 99999;
 	}

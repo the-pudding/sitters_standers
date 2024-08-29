@@ -4,46 +4,45 @@
 	let h = 55;
 	export let data;
 
-	let allPeople = [];
-	const dotPerPerson = 50000;
-	let dotSize = 10;
+	let circles = [];
+	const dotSize = 5; // Smaller size for Person circles
 	export let selectedVar;
 	let new_selectedVar = "";
+	let multiplier = 0.03;
 
 	const sketch = (p) => {
 		p.setup = () => {
 			w = p.windowWidth;
 			h = p.windowHeight - 6;
 			p.createCanvas(w, h);
-			let counter = 0;
+
 			for (let i = 0; i < data.length; i++) {
-				for (let j = 0; j < data[i].dots; j++) {
-					allPeople[counter] = new Person(data[i], counter, j);
-					counter += 1;
-				}
+				let circle = new Circle(data[i], i);
+				circles.push(circle);
 			}
 		};
 
 		p.draw = () => {
 			p.clear();
 			p.background(240, 240, 240);
-			p.fill(255);
-			p.noStroke();
-    		// Check for collisions between every pair
-			for (let i = 0; i < allPeople.length; i++) {
-				for (let j = i + 1; j < allPeople.length; j++) {
-					if (Math.abs(allPeople[i].location.x - allPeople[j].location.x) < 15 && Math.abs(allPeople[i].location.y -allPeople[j].location.y) < 15) {
-						if (allPeople[i].group != -1) {
-							allPeople[i].collide(allPeople[j]);
-						}
-					}
+
+			for (let i = 0; i < circles.length; i++) {
+				for (let j = i + 1; j < circles.length; j++) {
+					circles[i].collide(circles[j]);
 				}
-				allPeople[i].update();
-				allPeople[i].display();
+				circles[i].update();
+				circles[i].display();
 			}
+
+			for (let i = 0; i < circles.length; i++) {
+				if (p.dist(p.mouseX, p.mouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius*1.1) {
+					circles[i].displayText();	
+				}				
+			}
+
 			if (selectedVar != new_selectedVar) {
-				for (let i = 0; i < allPeople.length; i++) {
-					allPeople[i].updateGroup();
+				for (let i = 0; i < circles.length; i++) {
+					circles[i].updateGroup();
 				}
 				new_selectedVar = selectedVar;
 			}
@@ -56,171 +55,236 @@
 			h = p.windowHeight - 6;
 			p.resizeCanvas(w, h);
 
-		    // Clear the previous timeout if the windowResized function is triggered again
 			clearTimeout(resizeTimeout);
 
-		    // Set a new timeout to wait 0.3 seconds before running the resize loop
 			resizeTimeout = setTimeout(() => {
-				for (let i = 0; i < allPeople.length; i++) {
-					// allPeople[i].resize();
-					allPeople[i].updateGroup();
+				for (let i = 0; i < circles.length; i++) {
+					circles[i].updateGroup();
 				}
-		    }, 300); // 300 milliseconds = 0.3 seconds
+			}, 300);
 		};
 
-		class Person {
-			constructor(obj, personNumber, personNumberGroup) {
-				this.n = personNumber;
-				this.group_n = personNumberGroup;
+		class Circle {
+			constructor(obj, index) {
 				this.obj = obj;
-				this.location = p.createVector(w * Math.random(), h * Math.random());
+				this.index = index;
+				this.radius = Math.max(Math.sqrt(obj.TOT_EMP) * multiplier, dotSize); // Ensure radius is not too small
+				if (this.radius < dotSize*1.5) {
+					this.radius = dotSize*1.5;
+				}
+				this.center = p.createVector(
+					p.random(this.radius, w - this.radius),
+					p.random(this.radius, h - this.radius)
+					);
 				this.velocity = p.createVector(0, 0);
 				this.acceleration = p.createVector(0, 0);
-				this.target = p.createVector(w/2, h/2);
-				this.maxSpeed = 8;
-				this.maxForce = 4;
-				this.group = 0;
+				this.target = this.center.copy();
+				this.maxSpeed = 10;
+				this.maxForce = 10;
+				this.varPct = 0;
+				this.peoplePositions = this.calculatePeoplePositions(obj.dots);
 			}
 
-			update() {
-		        // Calculate the desired vector pointing from location to target
-				let desired = p.Vector.sub(this.target, this.location);
-				let distance = desired.mag();
+			calculatePeoplePositions(totalPeople) {
+				let positions = [];
+				let centerX = this.center.x;
+				let centerY = this.center.y;
+				let angle = 0;
+				let radiusIncrement = dotSize * 1.2; // Adjust this for packing density
 
-		        // If we are close to the target, slow down
-				let speed = this.maxSpeed;
-				if (distance < 100) {
-					speed = p.map(distance, 0, 100, 0, this.maxSpeed);
+				for (let i = 0; i < totalPeople; i++) {
+					let x, y;
+
+					if (i === 0) {
+						// First ellipse at the center
+						x = centerX;
+						y = centerY;
+					} else {
+						// Calculate the position for the next ellipse
+						let currentRadius = Math.floor(Math.sqrt(i)) * radiusIncrement;
+						angle = (i % Math.floor(Math.sqrt(i))) * p.TWO_PI / Math.floor(Math.sqrt(i));
+						x = centerX + currentRadius * p.cos(angle);
+						y = centerY + currentRadius * p.sin(angle);
+					}
+
+					// Check if the new position is within the parent circle
+					if (p.dist(centerX, centerY, x, y) + dotSize / 2 <= this.radius) {
+						positions.push(p.createVector(x, y));
+					}
 				}
-				desired.setMag(speed);
 
-		        // Steering = Desired - Velocity
-				let steer = p.Vector.sub(desired, this.velocity);
-				steer.limit(this.maxForce);
-
-		        // Apply acceleration
-				this.acceleration.add(steer);
-		        // let nudge = p.createVector(p.random(-0.2, 0.2), p.random(-0.2, 0.2));
-		        // this.acceleration.add(nudge);
-
-		        // Update velocity
-				this.velocity.add(this.acceleration);
-
-		        // Limit velocity to max speed
-				this.velocity.limit(this.maxSpeed);
-
-		        // Update location
-				this.location.add(this.velocity);
-
-		        // Reset acceleration to 0 each cycle
-				this.acceleration.mult(0);
-
+				return positions;
 			}
 
 			updateGroup() {
 				let value = String(this.obj[selectedVar]).replace(/[^0-9.]/g, '');
 
 				if (value === '') {
-					this.group = -1;
-					this.target = p.createVector(w/2,-1000);
+					this.target = p.createVector(w / 2, -h);
 				} else {
 					const num = Number(value);
-					const dotPct = Number(this.group_n) / Number(this.obj.dots);
-					const varPct = num / 100;
-					if (dotPct > varPct) {
-						this.group = 0;
-						this.target = p.createVector( w*0.5*Math.random() , h*Math.random());
-					} else {
-						this.group = 1;
-						this.target = p.createVector( (w*0.5) + (w*0.5*Math.random()), h*Math.random());
+					this.varPct = num / 100;
+					let y = 50;
+					if (this.varPct > .5) {
+						y = h - 50;
 					}
+					let x = p.random(0 + dotSize, w - dotSize);
+					this.target = p.createVector(
+						x, y
+						//p.constrain(w/2, this.radius, w - this.radius),
+						//h - p.constrain(this.varPct * h, this.radius, h - this.radius)
+						);
 				}
 			}
 
-			display() {
-				if(this.group == -1) {
-					p.fill(200,200,200);
-				} else if(this.group == 0) {
-					p.fill(0);
-				} else if (this.group == 1) {
-					p.fill(255,200,0)
-				}  else if (this.group == 2) {
-					p.fill(0,200,255)
-				}  else if (this.group == 3) {
-					p.fill(0,255,200)
+			update() {
+				let desired = p.Vector.sub(this.target, this.center);
+				let distance = desired.mag();
+
+				let speed = this.maxSpeed;
+				if (distance < 100) {
+					speed = p.map(distance, 0, 100, 0.5, this.maxSpeed); // Ensuring a minimum speed
 				}
-				p.rect(this.location.x, this.location.y, dotSize/2, dotSize);
-				// p.fill(100,100,0);
-				p.rect(this.location.x, this.location.y, dotSize/2, dotSize / 4);
+				desired.setMag(speed);
+
+				let steer = p.Vector.sub(desired, this.velocity);
+				steer.limit(this.maxForce);
+
+				this.acceleration.add(steer);
+				this.velocity.add(this.acceleration);
+				this.velocity.limit(this.maxSpeed);
+
+				let prevCenter = this.center.copy();
+
+				this.center.add(this.velocity);
+
+				this.acceleration.mult(0);
+
+				// Only constrain the circle if the target is within the screen bounds
+				if (this.target.y >= 0 && this.target.y <= h && this.target.x >= 0 && this.target.x <= w) {
+					this.center.x = p.constrain(this.center.x, this.radius, w - this.radius);
+					this.center.y = p.constrain(this.center.y, this.radius, h - this.radius);
+				}
+
+				// Update all persons' positions relative to the new circle center
+				this.updatePeoplePositions(prevCenter, this.center);
+			}
+
+			updatePeoplePositions(prevCenter, newCenter) {
+				let maxRadius = this.radius - dotSize; // Maximum radius for the people to be within the circle
+				let currentRadius = dotSize * 1.2; // Start just outside the center ellipse, with minimal spacing
+				let angleIncrement;
+				let ellipsesInCurrentCircle;
+				let angle = 0;
+
+				let newPosition = newCenter.copy(); // Start from the center
+
+				for (let i = 0; i < this.peoplePositions.length; i++) {
+					// Set the current position
+					this.peoplePositions[i] = newPosition.copy();
+
+					// Calculate the number of ellipses in the current circle
+					ellipsesInCurrentCircle = Math.floor(p.TWO_PI * currentRadius / (dotSize*1.2)); // Number of ellipses that can fit in the circumference
+					angleIncrement = p.TWO_PI / ellipsesInCurrentCircle;
+
+					// Move to the next position on the current circle
+					angle += angleIncrement;
+
+					// If a full circle is completed, move to the next concentric circle
+					if (angle >= p.TWO_PI*1.0001) {
+						angle = 0;
+						currentRadius += dotSize * 1; // Move to the next concentric circle
+						// If we exceed the max radius, stop adding more ellipses
+						if (currentRadius > maxRadius) {
+							break;
+						}
+					}
+
+					// Calculate the new position based on the current radius and angle
+					let offsetX = currentRadius * p.cos(angle);
+					let offsetY = currentRadius * p.sin(angle);
+					newPosition = p.createVector(newCenter.x + offsetX, newCenter.y + offsetY);
+				}
 			}
 
 			collide(other) {
-				let distance = p.Vector.dist(this.location, other.location);
-				let minDist = dotSize;
+			    // Check if either circle's target is off the screen
+				if ((this.target.y < 0 || this.target.y > h || this.target.x < 0 || this.target.x > w) ||
+					(other.target.y < 0 || other.target.y > h || other.target.x < 0 || other.target.x > w)) {
+			        return; // Skip collision detection if the target is off-screen
+				}
+
+				let distance = p.Vector.dist(this.center, other.center);
+				let minDist = this.radius + other.radius;
 
 				if (distance < minDist) {
-			        // Calculate the normal vector
-					let normal = p.Vector.sub(other.location, this.location);
-					normal.normalize();
+				    // Calculate the overlap distance
+					let overlap = minDist - distance;
 
-			        // Calculate relative velocity
-					let relativeVelocity = p.Vector.sub(this.velocity, other.velocity);
-					let speed = relativeVelocity.dot(normal);
+				    // Calculate the direction of the overlap
+					let direction = p.Vector.sub(other.center, this.center);
+					direction.normalize();
 
-					if (speed > 0) {
-			            return; // They are moving apart
-			        }
+				    // Apply the correction more aggressively
+					let correction = direction.copy().mult(overlap / 20);
+					this.center.sub(correction);
+					other.center.add(correction);
 
-			        // Calculate the impulse scalar
-			        let impulse = (2 * speed) / (1 + 1); // assuming equal mass
+				    // Reset velocities to 0 to stop movement after correction
+					this.velocity.mult(0);
+					other.velocity.mult(0);
 
-			        // Apply the impulse to both objects
-			        this.velocity.add(p.Vector.mult(normal, -impulse));
-			        other.velocity.add(p.Vector.mult(normal, impulse));
+				        // Adjust targets to favor larger circles towards the center
+					if (this.radius >= other.radius) {
+				        // Move this circle's target closer to the center
+						this.target.sub(correction);
+				        // Move the other circle's target outward
+						other.target.add(correction);
+					} else {
+				        // Move this circle's target outward
+						this.target.add(correction);
+				        // Move the other circle's target closer to the center
+						other.target.sub(correction);
+					}
 
-			        // Resolve overlap (push them apart)
-			        let overlap = minDist - distance;
-			        let correction = normal.copy().mult(overlap / 2); // divide correction equally
-			        this.location.sub(correction);
-			        other.location.add(correction);
+				        // Ensure both circles and their targets remain within the canvas bounds
+					this.center.x = p.constrain(this.center.x, this.radius, w - this.radius);
+					this.center.y = p.constrain(this.center.y, this.radius, h - this.radius);
+					other.center.x = p.constrain(other.center.x, other.radius, w - other.radius);
+					other.center.y = p.constrain(other.center.y, other.radius, h - other.radius);
 
-			        // Add a small random displacement to prevent sticking
-			        let nudge = p.createVector(p.random(-1, 1), p.random(-1, 1));
-			        this.location.add(nudge);
-			        other.location.add(nudge.mult(-1)); // Opposite direction for the other ellipse
+					this.target.x = p.constrain(this.target.x, this.radius, w - this.radius);
+					this.target.y = p.constrain(this.target.y, this.radius, h - this.radius);
+					other.target.x = p.constrain(other.target.x, other.radius, w - other.radius);
+					other.target.y = p.constrain(other.target.y, other.radius, h - other.radius);
+				}
+			}
 
-			        if (p.Vector.dist(this.location, this.target) < 3 || p.Vector.dist(other.location, other.target) < 3) {
-					    // Generate a random displacement vector with a magnitude between 5 and 20 pixels
-			        	let minDisplacement = 3;
-			        	let maxDisplacement = 5;
+		display() {
+				// p.fill(200, 200, 255, 100);
+			p.fill(0,200,200, 100);
+			p.textAlign("CENTER","TOP");
+			p.noStroke();
+			p.ellipse(this.center.x, this.center.y, this.radius*1.1, this.radius*1.1);
+				// Display each Person as a small circle
 
-			        	let thisDisplacement = p.createVector(
-			        		p.random(minDisplacement, maxDisplacement) * (p.random() < 0.5 ? -1 : 1),
-			        		p.random(minDisplacement, maxDisplacement) * (p.random() < 0.5 ? -1 : 1)
-			        		);
-
-			        	let otherDisplacement = p.createVector(
-			        		p.random(minDisplacement, maxDisplacement) * (p.random() < 0.5 ? -1 : 1),
-			        		p.random(minDisplacement, maxDisplacement) * (p.random() < 0.5 ? -1 : 1)
-			        		);
-
-					    // Move the targets by the displacement vectors, keeping them within the canvas bounds
-			        	this.target.add(thisDisplacement);
-			        	other.target.add(otherDisplacement);
-
-					    // Ensure the new target is within canvas boundaries
-			        	this.target.x = p.constrain(this.target.x, dotSize, w - dotSize);
-			        	this.target.y = p.constrain(this.target.y, dotSize, h - dotSize);
-
-			        	other.target.x = p.constrain(other.target.x, dotSize, w - dotSize);
-			        	other.target.y = p.constrain(other.target.y, dotSize, h - dotSize);
-			        }
-
-			    }
+			for (let i = 0; i < this.peoplePositions.length; i++) {
+				if (i/this.obj.dots < this.varPct) {
+					p.fill(0,150,150);
+				} else {
+					p.fill(0,200,200);
+				}
+				p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
 			}
 		}
-	};
 
+		displayText() {
+			p.fill(0);
+			p.stroke(255);
+			p.text(this.obj.OCCUPATION,this.center.x - 50, this.center.y, 100, 100);	
+		}
+	}
+};
 </script>
 
 <P5 {sketch} />

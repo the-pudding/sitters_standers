@@ -3,7 +3,7 @@
 	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
 	export let copy;
 	export let data;
-	let selectedVar = "Percent of workers, choice of sitting or standing is allowed";
+	let selectedVar = getPercentKeys(data)[0];
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
 	
@@ -12,8 +12,8 @@
 			return [];
 		}
 		const firstObject = arr[0];
-		const percentKeys = Object.keys(firstObject).filter(key => key.startsWith("Percent"));
-
+		let percentKeys = Object.keys(firstObject).filter(key => key.startsWith("Percent"));
+		percentKeys.push("H_MEAN");
 		return percentKeys;
 	}
 
