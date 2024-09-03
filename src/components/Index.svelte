@@ -4,6 +4,10 @@
 	// import Footer from "$components/Footer.svelte";
 
 	const copy = getContext("copy");
+	copy.questions = copy.questions.map((question, index) => ({
+		...question,
+		num: index + 1
+	}));
 	const data = getContext("data");
 </script>
 

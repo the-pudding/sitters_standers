@@ -2,13 +2,14 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let data;
+	export let data, currentData, questions, copy, currentQuestionNum;
 
 	let circles = [];
-	const dotSize = 5; // Smaller size for Person circles
-	export let selectedVar;
-	let new_selectedVar = "";
-	let multiplier = 0.03;
+	const dotSize = 5; 
+	export let currentVar;
+	let new_currentVar = -1;
+	let prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
+	let multiplier = 0.038;
 
 	const sketch = (p) => {
 		p.setup = () => {
@@ -24,27 +25,35 @@
 
 		p.draw = () => {
 			p.clear();
-			p.background(240, 240, 240);
+			p.smooth();
+			p.background(255);
 
 			for (let i = 0; i < circles.length; i++) {
-				for (let j = i + 1; j < circles.length; j++) {
-					circles[i].collide(circles[j]);
-				}
+				circles[i].updateGroup();
 				circles[i].update();
 				circles[i].display();
+				for (let j = 0; j < circles.length; j++) {
+					if (j != i) {
+						circles[i].collide(circles[j]);
+					}
+				}
+				
 			}
 
 			for (let i = 0; i < circles.length; i++) {
-				if (p.dist(p.mouseX, p.mouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius*1.1) {
+				circles[i].hovered = false;
+				if (p.dist(p.mouseX, p.mouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius/2) {
 					circles[i].displayText();	
-				}				
+					circles[i].hovered = true;
+				}
 			}
 
-			if (selectedVar != new_selectedVar) {
-				for (let i = 0; i < circles.length; i++) {
-					circles[i].updateGroup();
-				}
-				new_selectedVar = selectedVar;
+			if (currentVar != new_currentVar) {
+				// for (let i = 0; i < circles.length; i++) {
+				// 	circles[i].updateGroup();
+				// }
+				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
+				new_currentVar = currentVar;
 			}
 		};
 
@@ -61,16 +70,20 @@
 				for (let i = 0; i < circles.length; i++) {
 					circles[i].updateGroup();
 				}
-			}, 300);
+			}, 100);
 		};
 
 		class Circle {
 			constructor(obj, index) {
 				this.obj = obj;
 				this.index = index;
-				this.radius = Math.max(Math.sqrt(obj.TOT_EMP) * multiplier, dotSize); // Ensure radius is not too small
-				if (this.radius < dotSize*1.5) {
-					this.radius = dotSize*1.5;
+				
+				if (obj.dots <= 1) {
+					this.radius = dotSize*3;
+				} else if (obj.dots <= 7) {
+					this.radius = dotSize*5;
+				} else {
+					this.radius = Math.sqrt(obj.TOT_EMP) * multiplier;
 				}
 				this.center = p.createVector(
 					p.random(this.radius, w - this.radius),
@@ -79,10 +92,11 @@
 				this.velocity = p.createVector(0, 0);
 				this.acceleration = p.createVector(0, 0);
 				this.target = this.center.copy();
-				this.maxSpeed = 10;
-				this.maxForce = 10;
-				this.varPct = 0;
+				this.maxSpeed = 4;
+				this.maxForce = 1;
 				this.peoplePositions = this.calculatePeoplePositions(obj.dots);
+				this.hovered = false;
+				this.score = 0;
 			}
 
 			calculatePeoplePositions(totalPeople) {
@@ -112,65 +126,40 @@
 						positions.push(p.createVector(x, y));
 					}
 				}
-
 				return positions;
 			}
 
 			updateGroup() {
-				let value = String(this.obj[selectedVar]).replace(/[^0-9.]/g, '');
-
-				if (value === '') {
-					this.target = p.createVector(w / 2, -h);
-				} else {
-					const num = Number(value);
-					this.varPct = num / 100;
-					let y = 50;
-					if (this.varPct > .5) {
-						y = h - 50;
+				// let value = String(this.obj[currentVar]).replace(/[^0-9.]/g, '');
+				// if (value === '') {
+				// 	this.target = p.createVector(w / 2, -h);
+				// } else {
+				// 	const num = Number(value);
+				// 	this.varPct = num / 100;
+				// 	let y = 0;
+				// 	if (this.varPct > .5) { y = h; }
+				// 	let x = this.target.x;
+				// 	this.target = p.createVector(x, y);
+				// }
+				this.score = 0;
+				for (let i = 0; i < currentQuestionNum; i++) {
+					const question = questions[i];
+					let value = String(this.obj[question]).replace(/[^0-9.]/g, '');
+						if (value != "" && Number(value) > 0) {
+							if (Number(value) > Number(copy.questions[i].threshold) && currentData[i] == 0 && value > 0) {
+							this.score = 1;	
+						}
 					}
-					let x = p.random(0 + dotSize, w - dotSize);
-					this.target = p.createVector(
-						x, y
-						//p.constrain(w/2, this.radius, w - this.radius),
-						//h - p.constrain(this.varPct * h, this.radius, h - this.radius)
-						);
 				}
+
+				this.varPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
+				console.log(this.varPct)
+				this.prevVarPct = Number(String(this.obj[prevVar]).replace(/[^0-9.]/g, ''));
 			}
 
-			update() {
-				let desired = p.Vector.sub(this.target, this.center);
-				let distance = desired.mag();
+			
 
-				let speed = this.maxSpeed;
-				if (distance < 100) {
-					speed = p.map(distance, 0, 100, 0.5, this.maxSpeed); // Ensuring a minimum speed
-				}
-				desired.setMag(speed);
-
-				let steer = p.Vector.sub(desired, this.velocity);
-				steer.limit(this.maxForce);
-
-				this.acceleration.add(steer);
-				this.velocity.add(this.acceleration);
-				this.velocity.limit(this.maxSpeed);
-
-				let prevCenter = this.center.copy();
-
-				this.center.add(this.velocity);
-
-				this.acceleration.mult(0);
-
-				// Only constrain the circle if the target is within the screen bounds
-				if (this.target.y >= 0 && this.target.y <= h && this.target.x >= 0 && this.target.x <= w) {
-					this.center.x = p.constrain(this.center.x, this.radius, w - this.radius);
-					this.center.y = p.constrain(this.center.y, this.radius, h - this.radius);
-				}
-
-				// Update all persons' positions relative to the new circle center
-				this.updatePeoplePositions(prevCenter, this.center);
-			}
-
-			updatePeoplePositions(prevCenter, newCenter) {
+			updatePeoplePositions(newCenter) {
 				let maxRadius = this.radius - dotSize; // Maximum radius for the people to be within the circle
 				let currentRadius = dotSize * 1.2; // Start just outside the center ellipse, with minimal spacing
 				let angleIncrement;
@@ -207,84 +196,126 @@
 				}
 			}
 
-			collide(other) {
-			    // Check if either circle's target is off the screen
-				if ((this.target.y < 0 || this.target.y > h || this.target.x < 0 || this.target.x > w) ||
-					(other.target.y < 0 || other.target.y > h || other.target.x < 0 || other.target.x > w)) {
-			        return; // Skip collision detection if the target is off-screen
+			update() {
+			    // Determine gravity direction based on this.varPct
+				let gravityAmount = p.map(this.center.y, 100, h, 15, 0.5); 
+				if (this.score == 0) {
+					gravityAmount = p.map(this.center.y, h, 100, -15, -0.5); 
 				}
+			    let gravity = p.createVector(0, gravityAmount); // Upward if varPct < 0.5, otherwise downward
+			    let friction = this.velocity.copy();
+			    friction.mult(-2); // Apply a small amount of friction
 
-				let distance = p.Vector.dist(this.center, other.center);
-				let minDist = this.radius + other.radius;
+			    // Apply gravity and friction
+			    this.acceleration.add(gravity);
+			    this.acceleration.add(friction);
 
-				if (distance < minDist) {
-				    // Calculate the overlap distance
-					let overlap = minDist - distance;
+			    // Update velocity with acceleration
+			    this.velocity.add(this.acceleration);
 
-				    // Calculate the direction of the overlap
-					let direction = p.Vector.sub(other.center, this.center);
-					direction.normalize();
+			    // Update center position with the new velocity
+			    this.center.add(this.velocity);
 
-				    // Apply the correction more aggressively
-					let correction = direction.copy().mult(overlap / 20);
-					this.center.sub(correction);
-					other.center.add(correction);
+			    // Constrain the circle within screen bounds
+			    this.center.x = p.constrain(this.center.x, this.radius, w - this.radius);
+			    this.center.y = p.constrain(this.center.y, this.radius, h - this.radius);
 
-				    // Reset velocities to 0 to stop movement after correction
-					this.velocity.mult(0);
-					other.velocity.mult(0);
+			    // Apply damping to simulate energy loss
+			    this.velocity.mult(0.95); // Reduce velocity slightly each frame
 
-				        // Adjust targets to favor larger circles towards the center
-					if (this.radius >= other.radius) {
-				        // Move this circle's target closer to the center
-						this.target.sub(correction);
-				        // Move the other circle's target outward
-						other.target.add(correction);
-					} else {
-				        // Move this circle's target outward
-						this.target.add(correction);
-				        // Move the other circle's target closer to the center
-						other.target.sub(correction);
-					}
+			    // Reset acceleration for the next frame
+			    this.acceleration.mult(0);
 
-				        // Ensure both circles and their targets remain within the canvas bounds
-					this.center.x = p.constrain(this.center.x, this.radius, w - this.radius);
-					this.center.y = p.constrain(this.center.y, this.radius, h - this.radius);
-					other.center.x = p.constrain(other.center.x, other.radius, w - other.radius);
-					other.center.y = p.constrain(other.center.y, other.radius, h - other.radius);
-
-					this.target.x = p.constrain(this.target.x, this.radius, w - this.radius);
-					this.target.y = p.constrain(this.target.y, this.radius, h - this.radius);
-					other.target.x = p.constrain(other.target.x, other.radius, w - other.radius);
-					other.target.y = p.constrain(other.target.y, other.radius, h - other.radius);
-				}
+			    // Update positions of people within the circle
+			    this.updatePeoplePositions(this.center);
 			}
 
-		display() {
-				// p.fill(200, 200, 255, 100);
-			p.fill(0,200,200, 100);
-			p.textAlign("CENTER","TOP");
-			p.noStroke();
-			p.ellipse(this.center.x, this.center.y, this.radius*1.1, this.radius*1.1);
+			collide(other) {
+				let distance = p.Vector.dist(this.center, other.center);
+			    let minDist = (this.radius/2 + other.radius/1.5); // The minimum distance to prevent overlap
+
+			    if (distance < minDist) {
+			        // Calculate the overlap distance
+			    	let overlap = minDist - distance;
+
+			        // Calculate the direction of the overlap
+			    	let direction = p.Vector.sub(other.center, this.center);
+			    	direction.normalize();
+
+			        // Apply the correction to fully separate the circles
+			    	let correction = direction.copy().mult(overlap / 6);
+			    	this.center.sub(correction);
+			    	other.center.add(correction);
+
+			        // Calculate relative velocity in the direction of the collision
+			    	let relativeVelocity = p.Vector.sub(this.velocity, other.velocity);
+			    	let bounce = relativeVelocity.dot(direction);
+
+			        // Reduce bounce effect significantly
+			        let bounceFactor = 0.2; // Further reduce bounce intensity
+			        let bounceEffect = direction.copy().mult(bounce * bounceFactor);
+			        this.velocity.sub(bounceEffect);
+			        other.velocity.add(bounceEffect);
+
+			        // Apply strong damping to reduce velocity after bounce
+			        let dampingFactor = 0.5; // Increase damping to reduce energy retention further
+			        this.velocity.mult(dampingFactor);
+			        other.velocity.mult(dampingFactor);
+
+			        // Gradually reduce velocity to encourage settling
+			        this.velocity.mult(0.95);
+			        other.velocity.mult(0.95);
+
+			        // Stop the circles if their velocity is below a threshold
+			        let velocityThreshold = 0.1; // Define a low velocity threshold
+			        if (this.velocity.mag() < velocityThreshold) {
+			        	this.velocity.set(0, 0);
+			        }
+			        if (other.velocity.mag() < velocityThreshold) {
+			        	other.velocity.set(0, 0);
+			        }
+			    }
+			}
+
+			display() {
+				p.noFill();
+				// p.fill(0,200,200, 100);
+				p.textAlign("CENTER","TOP");
+				p.ellipseMode("CENTER");
+				p.strokeWeight(0.4);
+				p.stroke(200,200,200);
+				if (this.hovered) {
+					p.stroke(0)
+					p.strokeWeight(2);
+				}
+				p.circle(this.center.x, this.center.y, this.radius);
 				// Display each Person as a small circle
 
-			for (let i = 0; i < this.peoplePositions.length; i++) {
-				if (i/this.obj.dots < this.varPct) {
-					p.fill(0,150,150);
-				} else {
-					p.fill(0,200,200);
+				const dotsToFill = Math.round(this.obj.dots * (this.varPct / 100));
+				for (let i = 0; i < this.peoplePositions.length; i++) {
+					p.noStroke();
+					if (i < dotsToFill) {
+						p.fill(0); // Fill color for dots that should be filled
+					} else {
+						p.fill(230, 230, 230); // Fill color for remaining dots
+					}
+					p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
 				}
-				p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
+				// p.fill(0)
+				// p.text(this.varPct, this.center.x, this.center.y);
+			}
+
+			displayText() {
+				p.fill(0);
+				p.stroke(255);
+				p.text(this.obj.OCCUPATION + "\n\n" + currentVar + "\n\n" + Number(this.varPct),20, h/2, 200, 100);
 			}
 		}
+	};
 
-		displayText() {
-			p.fill(0);
-			p.stroke(255);
-			p.text(this.obj.OCCUPATION,this.center.x - 50, this.center.y, 100, 100);	
-		}
+	$: {
+		currentVar, prevVar;
 	}
-};
 </script>
 
 <P5 {sketch} />

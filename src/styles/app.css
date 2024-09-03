@@ -100,4 +100,44 @@ header {
 	position: absolute;
 	top: 0;
 	left: 0;
+	font-family: var(--sans);
+}
+
+/*Question box*/
+.question {
+	position: fixed;
+	left: 50%;
+	width: 450px;
+	max-width: 90%;
+	background: white;
+	border: 1px solid #000;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	padding: 20px;
+	color: #777;
+}
+
+.answers {
+	display: block;
+	width: 100%;
+	margin-top: 10px;
+}
+.answerButton {
+	width: 48%;
+}
+.question span {
+	color: black;
+	font-weight: bold;
+}
+.backButton {
+	background: none;
+	padding: 0;
+	margin-bottom: 10px;
+	font-size: 14px;
+	text-transform: uppercase;
+	color: #999;
+}
+.backButton:hover {
+	background: none;
+	color: black;
 }
