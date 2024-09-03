@@ -153,7 +153,6 @@
 				}
 
 				this.varPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
-				console.log(this.varPct)
 				this.prevVarPct = Number(String(this.obj[prevVar]).replace(/[^0-9.]/g, ''));
 			}
 
