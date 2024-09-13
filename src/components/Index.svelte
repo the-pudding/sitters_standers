@@ -6,8 +6,11 @@
 	const copy = getContext("copy");
 	copy.questions = copy.questions.map((question, index) => ({
 		...question,
-		num: index + 1
+		index: index
 	}));
+	copy.first_question[0].options = copy.questions
+		.filter(question => question.excluded !== "1")
+		.map(question => question.short);
 	const data = getContext("data");
 </script>
 

@@ -2,7 +2,7 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let data, currentData, questions, copy, currentQuestionNum;
+	export let data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies;
 
 	let circles = [];
 	const dotSize = 5; 
@@ -10,41 +10,81 @@
 	let new_currentVar = -1;
 	let prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 	let multiplier = 0.038;
+	let guidedTour = true;
+	let zoomedGuidedTour = true;
+
+	let zoom = 1;       // Zoom level
+	let zoomTarget = 1;
+	let zoomMinMax = [0.2, 6];
+	let offsetX = 0;    // X offset for panning
+	let offsetXTarget = 0;
+	let offsetY = 0;    // Y offset for panning
+	let offsetYTarget = 0;
+	let startX, startY; // To store the starting position of dragging
+	let startTouches = []; // To store touch points for pinch zoom
+	let previousDistance = null; // To store the previous distance between two touches
+	let atlasGrotesk;
+	let dotDivider = 1;
 
 	const sketch = (p) => {
+
+		p.preload = () => {
+			atlasGrotesk = p.loadFont('assets/app/AtlasGrotesk-Regular-Web.otf');
+		}
 		p.setup = () => {
-			w = p.windowWidth;
+			w = p.constrain(p.windowWidth,800,6000);
 			h = p.windowHeight - 6;
+			if (p.windowWidth < 800) {
+				zoom = 0.45;
+				dotDivider = 2;
+				h = p.windowHeight*2;
+			}
+			
 			p.createCanvas(w, h);
+			
 
 			for (let i = 0; i < data.length; i++) {
 				let circle = new Circle(data[i], i);
 				circles.push(circle);
 			}
+			p.canvas.oncontextmenu = () => false;
 		};
 
 		p.draw = () => {
+			setStage();
 			p.clear();
 			p.smooth();
-			p.background(255);
+			p.background("#211d21");
+			p.textFont(atlasGrotesk);
+			p.push();
+			p.translate(offsetX, offsetY);
+			p.scale(zoom);
 
 			for (let i = 0; i < circles.length; i++) {
-				circles[i].updateGroup();
-				circles[i].update();
-				circles[i].display();
-				for (let j = 0; j < circles.length; j++) {
-					if (j != i) {
-						circles[i].collide(circles[j]);
+				if (checkDisplay(i)) {
+					circles[i].updateGroup();
+					circles[i].update();
+					circles[i].display();
+					for (let j = 0; j < circles.length; j++) {
+						if (j != i) {
+							circles[i].collide(circles[j]);
+						}
 					}
 				}
-				
 			}
 
 			for (let i = 0; i < circles.length; i++) {
-				circles[i].hovered = false;
-				if (p.dist(p.mouseX, p.mouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius/2) {
-					circles[i].displayText();	
-					circles[i].hovered = true;
+				if (checkDisplay(i)) {
+					circles[i].hovered = false;
+					// Adjust the mouse position to account for zoom and pan
+					let adjustedMouseX = (p.mouseX - offsetX) / zoom;
+					let adjustedMouseY = (p.mouseY - offsetY) / zoom;
+
+				    // Check hover using adjusted mouse position
+					if (p.dist(adjustedMouseX, adjustedMouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius / 2) {
+						circles[i].hovered = true;
+					}
+					circles[i].displayText(circles);
 				}
 			}
 
@@ -55,6 +95,143 @@
 				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 				new_currentVar = currentVar;
 			}
+			p.pop();
+			p.fill(255);
+			p.textAlign(p.LEFT);
+			p.text("Zoom: " + String(zoom.toFixed(2)), 10, 100);
+			p.text("Offset: [" + String(offsetX.toFixed(2)) + "," + String(offsetY.toFixed(2)) + "]", 10, 130);
+		};
+
+		function checkDisplay(n) {
+			zoomedGuidedTour = true;
+			if (copy.story[currentStageNumber].stage == "explore") {
+				return true;
+			}
+			if (copy.story[currentStageNumber].stage == "one_similar_job" && n == maxIndicies[0]) {
+				return true;
+			}
+			if (copy.story[currentStageNumber].stage == "other_similar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
+				return true;
+			}
+			if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
+				return true;
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs") {
+				guidedTour = false;
+				zoomedGuidedTour = false;
+				return true;
+			}
+			return false;
+		}
+
+		function setStage() {
+			if (copy.story[currentStageNumber].stage == "explore") {
+				return;
+			}
+			if (copy.story[currentStageNumber].stage == "one_similar_job") {
+				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 4);
+			}
+			if (copy.story[currentStageNumber].stage == "other_similar_jobs") {
+				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 1);
+			}
+			if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs") {
+				centerAndZoomOnCoordinate(w/2, h/2, .9);
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs") {
+				centerAndZoomOnCoordinate(w/2, h/2, .9);
+			}
+		}
+
+		function centerAndZoomOnCoordinate(targetX, targetY, targetZoom) {
+		    // Set the zoom level to the target zoom
+			zoomTarget = targetZoom;
+
+		    // // Calculate the offset to center the target coordinate on the canvas
+			offsetXTarget = p.width / 2 - targetX * zoomTarget;
+			offsetYTarget = p.height / 2 - targetY * zoomTarget;
+			zoom = p.lerp(zoom, zoomTarget, 0.05)
+			offsetX = p.lerp(offsetX, offsetXTarget, 0.05)
+			offsetY = p.lerp(offsetY, offsetYTarget, 0.05)
+		}
+
+		// Handle zooming with mouse wheel
+		p.mouseWheel = (event) => {
+		    // Adjust zoom speed based on the velocity of the scroll (event.delta)
+		    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
+		    let baseZoomSpeed = 0.05 * zoom;            // Base zoom speed proportional to current zoom
+		    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
+
+		    let previousZoom = zoom;
+
+		    if (event.delta > 0) {
+		        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom out
+		    } else {
+		        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom in
+		    }
+
+		    // Calculate the difference in zoom and adjust the offset
+		    let zoomChange = zoom / previousZoom;
+
+		    // Focus zoom on mouse position
+		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
+		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
+		};
+
+		// Handle panning with mouse drag
+		p.mousePressed = () => {
+			startX = p.mouseX - offsetX;
+			startY = p.mouseY - offsetY;
+		};
+
+		p.mouseDragged = () => {
+			offsetX = p.mouseX - startX;
+			offsetY = p.mouseY - startY;
+		};
+
+		// Handle pinch zoom and pan for touchscreens
+		p.touchStarted = () => {
+			if (p.touches.length === 1) {
+		        // Single touch for panning
+				startX = p.touches[0].x - offsetX;
+				startY = p.touches[0].y - offsetY;
+			} else if (p.touches.length === 2) {
+		        // Store the initial positions of two touches for pinch zoom
+				previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+			}
+		};
+
+		p.touchMoved = () => {
+			if (p.touches.length === 1) {
+		        // Pan with single finger swipe
+				offsetX = p.touches[0].x - startX;
+				offsetY = p.touches[0].y - startY;
+			} else if (p.touches.length === 2) {
+		        // Pinch to zoom with two fingers
+				let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+
+		        // Calculate the zoom change based on the distance between two touches
+				if (previousDistance) {
+					let zoomChange = currentDistance / previousDistance;
+					let previousZoom = zoom;
+		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
+
+		            // Adjust the offset to keep zoom centered between the two touch points
+		            let midX = (p.touches[0].x + p.touches[1].x) / 2;
+		            let midY = (p.touches[0].y + p.touches[1].y) / 2;
+		            offsetX = midX - (midX - offsetX) * zoomChange;
+		            offsetY = midY - (midY - offsetY) * zoomChange;
+		        }
+
+		        // Update previous distance
+		        previousDistance = currentDistance;
+		    }
+
+		    return false; // Prevent default behavior (like scrolling the page)
+		};
+
+		p.touchEnded = () => {
+		    // Reset after touch ends
+			previousDistance = null;
 		};
 
 		let resizeTimeout;
@@ -78,25 +255,26 @@
 				this.obj = obj;
 				this.index = index;
 				
-				if (obj.dots <= 1) {
+				if (obj.dots/dotDivider <= 1) {
 					this.radius = dotSize*3;
-				} else if (obj.dots <= 7) {
+				} else if (obj.dots/dotDivider <= 7) {
 					this.radius = dotSize*5;
 				} else {
 					this.radius = Math.sqrt(obj.TOT_EMP) * multiplier;
 				}
 				this.center = p.createVector(
 					p.random(this.radius, w - this.radius),
-					p.random(this.radius, h - this.radius)
+					-200
 					);
 				this.velocity = p.createVector(0, 0);
 				this.acceleration = p.createVector(0, 0);
 				this.target = this.center.copy();
-				this.maxSpeed = 4;
-				this.maxForce = 1;
-				this.peoplePositions = this.calculatePeoplePositions(obj.dots);
+				this.maxSpeed = 3;
+				this.maxForce = 0.5;
+				this.peoplePositions = this.calculatePeoplePositions(obj.dots/dotDivider);
 				this.hovered = false;
 				this.score = 0;
+				this.textDisplayed = false;
 			}
 
 			calculatePeoplePositions(totalPeople) {
@@ -130,23 +308,12 @@
 			}
 
 			updateGroup() {
-				// let value = String(this.obj[currentVar]).replace(/[^0-9.]/g, '');
-				// if (value === '') {
-				// 	this.target = p.createVector(w / 2, -h);
-				// } else {
-				// 	const num = Number(value);
-				// 	this.varPct = num / 100;
-				// 	let y = 0;
-				// 	if (this.varPct > .5) { y = h; }
-				// 	let x = this.target.x;
-				// 	this.target = p.createVector(x, y);
-				// }
 				this.score = 0;
 				for (let i = 0; i < currentQuestionNum; i++) {
 					const question = questions[i];
 					let value = String(this.obj[question]).replace(/[^0-9.]/g, '');
-						if (value != "" && Number(value) > 0) {
-							if (Number(value) > Number(copy.questions[i].threshold) && currentData[i] == 0 && value > 0) {
+					if (value != "" && Number(value) > 0) {
+						if (Number(value) > Number(copy.questions[i].threshold) && currentData[i] == 0 && value > 0) {
 							this.score = 1;	
 						}
 					}
@@ -196,17 +363,19 @@
 			}
 
 			update() {
-			    // Determine gravity direction based on this.varPct
-				let gravityAmount = p.map(this.center.y, 100, h, 15, 0.5); 
-				if (this.score == 0) {
-					gravityAmount = p.map(this.center.y, h, 100, -15, -0.5); 
-				}
-			    let gravity = p.createVector(0, gravityAmount); // Upward if varPct < 0.5, otherwise downward
-			    let friction = this.velocity.copy();
-			    friction.mult(-2); // Apply a small amount of friction
+			    // Set the target x and y positions based on data
+			    this.target.x = p.map(data[this.index].score, minmax[0], minmax[1], 0, w); // Adjust x based on score
+			    this.target.y = p.map(data[this.index].A_MEAN, 0, 200000, h, 0); // Adjust y based on A_MEAN
 
-			    // Apply gravity and friction
-			    this.acceleration.add(gravity);
+			    // Calculate the direction to the target position for both x and y
+			    let directionToTarget = p.createVector(this.target.x - this.center.x, this.target.y - this.center.y);
+			    directionToTarget.mult(0.05); // Control the speed of movement toward the target
+
+			    let friction = this.velocity.copy();
+			    friction.mult(-0.2); // Apply a small amount of friction to smooth out the movement
+
+			    // Apply movement toward the target and friction
+			    this.acceleration.add(directionToTarget);
 			    this.acceleration.add(friction);
 
 			    // Update velocity with acceleration
@@ -231,8 +400,7 @@
 
 			collide(other) {
 				let distance = p.Vector.dist(this.center, other.center);
-			    let minDist = (this.radius/2 + other.radius/1.5); // The minimum distance to prevent overlap
-
+			    let minDist = (this.radius/1.5 + other.radius/1.5); // The minimum distance to prevent overlap
 			    if (distance < minDist) {
 			        // Calculate the overlap distance
 			    	let overlap = minDist - distance;
@@ -257,7 +425,7 @@
 			        other.velocity.add(bounceEffect);
 
 			        // Apply strong damping to reduce velocity after bounce
-			        let dampingFactor = 0.5; // Increase damping to reduce energy retention further
+			        let dampingFactor = 0.2; // Increase damping to reduce energy retention further
 			        this.velocity.mult(dampingFactor);
 			        other.velocity.mult(dampingFactor);
 
@@ -266,7 +434,7 @@
 			        other.velocity.mult(0.95);
 
 			        // Stop the circles if their velocity is below a threshold
-			        let velocityThreshold = 0.1; // Define a low velocity threshold
+			        let velocityThreshold = 0.2; // Define a low velocity threshold
 			        if (this.velocity.mag() < velocityThreshold) {
 			        	this.velocity.set(0, 0);
 			        }
@@ -276,38 +444,119 @@
 			    }
 			}
 
+			
 			display() {
 				p.noFill();
 				// p.fill(0,200,200, 100);
-				p.textAlign("CENTER","TOP");
-				p.ellipseMode("CENTER");
-				p.strokeWeight(0.4);
-				p.stroke(200,200,200);
-				if (this.hovered) {
-					p.stroke(0)
-					p.strokeWeight(2);
+				p.ellipseMode(p.CENTER);
+				p.strokeWeight(0.4/zoom);
+				p.stroke("#947594");
+				if (this.hovered || this.textDisplayed) {
+					p.stroke("#ffffff")
+					p.strokeWeight(0.4/zoom);
 				}
 				p.circle(this.center.x, this.center.y, this.radius);
 				// Display each Person as a small circle
 
-				const dotsToFill = Math.round(this.obj.dots * (this.varPct / 100));
+				const dotsToFill = Math.round(this.obj.dots/dotDivider * (this.varPct / 100));
 				for (let i = 0; i < this.peoplePositions.length; i++) {
 					p.noStroke();
 					if (i < dotsToFill) {
-						p.fill(0); // Fill color for dots that should be filled
+						p.fill("#ff69f2"); // Fill color for dots that should be filled
 					} else {
-						p.fill(230, 230, 230); // Fill color for remaining dots
+						p.fill("#523c50"); // Fill color for remaining dots
 					}
 					p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
 				}
-				// p.fill(0)
-				// p.text(this.varPct, this.center.x, this.center.y);
+				
 			}
 
-			displayText() {
-				p.fill(0);
-				p.stroke(255);
-				p.text(this.obj.OCCUPATION + "\n\n" + currentVar + "\n\n" + Number(this.varPct),20, h/2, 200, 100);
+			checkTextOverlap(otherCircles) {
+			    // Approximate text height and width based on zoom and font size
+			    let scaledFontSize = h / 12 / zoom;
+			    if (guidedTour && zoomedGuidedTour) {
+			        scaledFontSize = h / 10 / zoom;
+			    }
+
+			    const avgCharWidth = 7; // Assume an average character width for optimization
+			    const textWidth = avgCharWidth * this.obj.OCC_SHORT.length / zoom; // Approximate text width
+			    const textHeight = scaledFontSize;
+
+			    // Position the text centered above the circle
+			    const leftX = this.center.x - textWidth / 2;
+			    const rightX = this.center.x + textWidth / 2;
+			    const topY = this.center.y - this.radius / 2 - (3 / zoom) - textHeight;
+			    const bottomY = topY + textHeight;
+
+			    // Check for overlap with other circles' text using simple bounding box collision
+			    for (let other of otherCircles) {
+			        if (other === this || !other.textDisplayed) continue; // Skip itself or non-displayed texts
+
+			        const otherTextWidth = avgCharWidth * other.obj.OCC_SHORT.length / zoom;
+			        const otherLeftX = other.center.x - otherTextWidth / 2;
+			        const otherRightX = other.center.x + otherTextWidth / 2;
+			        const otherTopY = other.center.y - other.radius / 2 - (3 / zoom) - textHeight;
+			        const otherBottomY = otherTopY + textHeight;
+
+			        // Approximate overlap check using bounding boxes
+			        if (leftX < otherRightX && rightX > otherLeftX && topY < otherBottomY && bottomY > otherTopY) {
+			            return true; // Early exit if overlap is detected
+			        }
+			    }
+			    
+			    return false; // No overlap
+			}
+
+
+			displayText(otherCircles) {
+			    const maxAlpha = 255; // Full opacity
+			    const fadeSpeed = 15; // Speed of fading in and out
+
+			    // Initialize alpha if not already defined
+			    if (this.alpha === undefined) {
+			        this.alpha = 0; // Start with fully transparent text
+			    }
+
+			    const shouldDisplayText = (this.radius > 30 && !this.checkTextOverlap(otherCircles)) || this.hovered || (!this.checkTextOverlap(otherCircles) && guidedTour && zoomedGuidedTour);
+
+			    // Gradually fade in or out the text
+			    if (shouldDisplayText) {
+			        this.alpha = Math.min(this.alpha + fadeSpeed, maxAlpha); // Fade in
+			    } else {
+			        this.alpha = Math.max(this.alpha - fadeSpeed, 0); // Fade out
+			    }
+
+			    // Only draw text if it's at least partially visible
+			    if (this.alpha > 0) {
+			        // Set the fill color with current alpha for fading effect
+			        p.fill(255, 255, 255, this.alpha);
+
+			        const maxTextWidth = 100 / zoom; // Scale the maximum width based on zoom
+			        const scaledFontSize = 12 / zoom; // Adjust font size based on zoom
+
+			        // Set the font size before displaying text
+			        p.textSize(scaledFontSize);
+
+			        // Measure the width of the text within the max width
+			        const textWidth = p.textWidth(this.obj.OCC_SHORT); // Actual width of the text
+
+			        // Approximate text height based on font size
+			        const lineHeight = scaledFontSize; // Set line height equal to font size
+			        const textHeight = lineHeight; // Single line height for this text
+
+			        // Align the text to be centered and bottom aligned
+			        p.textAlign(p.CENTER, p.BOTTOM);
+
+			        // Position the text exactly centered above the circle
+			        let xPos = this.center.x; // Center the text horizontally with the circle
+			        let yPos = this.center.y - this.radius / 2 - (3 / zoom); // Place the text 3 pixels above the circle, scaled by zoom
+			        p.noStroke();
+			        p.text(this.obj.OCC_SHORT, xPos, yPos);
+
+			        this.textDisplayed = true; // Mark text as displayed
+			    } else {
+			        this.textDisplayed = false; // Mark text as hidden
+			    }
 			}
 		}
 	};

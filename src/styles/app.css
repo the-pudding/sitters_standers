@@ -20,7 +20,9 @@
 	--border-radius: 2px;
 	--font-body: var(--serif);
 	--font-form: var(--sans);
-	--color-bg: var(--color-white);
+	/*	--color-bg: var(--color-white);*/
+	--color-bg: #211d21;
+	--color-light-purple: #947594;
 	--color-fg: var(--color-gray-900);
 	--color-primary: var(--color-black);
 	--color-link: var(--color-black);
@@ -35,8 +37,8 @@
 	--color-input-fg: var(--color-gray-900);
 	--color-placeholder: var(--color-gray-500);
 
-	/* "1" second duration */
-	--1s: 1ms;
+/* "1" second duration */
+--1s: 1ms;
 }
 
 /* dark theme */
@@ -96,6 +98,9 @@ header {
 	position: relative;
 	z-index: 99;
 }
+body {
+	overflow: hidden;
+}
 #content {
 	position: absolute;
 	top: 0;
@@ -106,15 +111,13 @@ header {
 /*Question box*/
 .question {
 	position: fixed;
-	left: 50%;
+	right: 10px;
 	width: 450px;
 	max-width: 90%;
-	background: white;
-	border: 1px solid #000;
-	top: 50%;
-	transform: translate(-50%, -50%);
+	background: black;
+	bottom: 50px;
 	padding: 20px;
-	color: #777;
+	color: white;
 }
 
 .answers {
@@ -124,6 +127,10 @@ header {
 }
 .answerButton {
 	width: 48%;
+}
+.stage_0 .back {
+	pointer-events: none;
+	opacity: 0;
 }
 .question span {
 	color: black;
