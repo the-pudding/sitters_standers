@@ -10,6 +10,7 @@
 	export let currentQuestionNum = 0;
 	let currentStageNumber = 0;
 	let selectedIndices = [];
+	let prevSelectedIndices = [];
 
 	/*------ set to true when not testing
 	-----------------------------------------------*/
@@ -64,17 +65,17 @@
 	        }
 
 	        // Add the score along with its index to scoresWithIndices array
-	        scoresWithIndices.push({ index: i, score: data[i].score });
+	        scoresWithIndices.push({ index: i, score: data[i].score, dots: data[i].dots });
 	    }
 
 	    // Step 3: Sort the scoresWithIndices array by score in ascending order
 	    scoresWithIndices.sort((a, b) => a.score - b.score);
 
 	    const numberOfIntroJobs = 10;
-	    // Step 4: Get the bottom 5 scores (first 5 in the sorted array)
+	    // Step 4: Get the bottom 10 scores (first 10 in the sorted array)
 	    minIndicies = scoresWithIndices.slice(0, numberOfIntroJobs).map(item => item.index);
 
-	    // Step 5: Get the top 5 scores (last 5 in the sorted array)
+	    // Step 5: Get the top 10 scores (last 10 in the sorted array)
 	    maxIndicies = scoresWithIndices.slice(-numberOfIntroJobs).map(item => item.index);
 
 	    const smoothingAmount = 12;
@@ -89,23 +90,54 @@
 	    // Step 9: Set minmax to these average values (optional, as per your original code)
 	    minmax[0] = minAvg;
 	    minmax[1] = maxAvg;
+
+	    // Step 10: Move the first item with at least 4 dots to the front of maxIndicies
+	    let found = false;
+
+	    // Check maxIndicies for an item with at least 4 dots
+	    for (let i = maxIndicies.length - 1; i >= 0; i--) {
+	        const index = maxIndicies[i];
+	        if (data[index].dots >= 4) {
+	            // Remove the found item from its current position
+	            maxIndicies.splice(i, 1);
+	            // Insert it at the front of the array
+	            maxIndicies.unshift(index);
+	            found = true;
+	            break;
+	        }
+	    }
+
+	    // If no item in maxIndicies has at least 4 dots, find one in the entire sorted array
+	    if (!found) {
+	        for (let i = scoresWithIndices.length - 1; i >= 0; i--) {
+	            if (scoresWithIndices[i].dots >= 4) {
+	                const index = scoresWithIndices[i].index;
+	                // Insert it at the front of maxIndicies
+	                maxIndicies.unshift(index);
+	                // Remove the last item to maintain the number of intro jobs
+	                if (maxIndicies.length > numberOfIntroJobs) {
+	                    maxIndicies.pop();
+	                }
+	                break;
+	            }
+	        }
+	    }
+
+	    // console.log(data);
 	}
 
 	$: {
-		if (currentIntroActive != introActive) {
+		if (currentIntroActive != introActive || selectedIndices != prevSelectedIndices) {
 			updateData();
 			currentIntroActive = introActive;
+			prevSelectedIndices = selectedIndices; 
 		}
 		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies;
 	}
 </script>
 
 <div class="container">
-	{#if introActive}
-	<div transition:fade>
-		<Intro {copy} bind:selectedIndices bind:introActive/>
-	</div>
-	{/if}
+	<Intro {copy} bind:selectedIndices bind:introActive/>
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
 		<Canvas {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies}/>

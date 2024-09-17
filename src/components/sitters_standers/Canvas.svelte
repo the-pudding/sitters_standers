@@ -36,7 +36,7 @@
 			h = p.windowHeight - 6;
 			if (p.windowWidth < 800) {
 				zoom = 0.45;
-				dotDivider = 2;
+				// dotDivider = 2;
 				h = p.windowHeight*2;
 			}
 			
@@ -96,14 +96,15 @@
 				new_currentVar = currentVar;
 			}
 			p.pop();
-			p.fill(255);
-			p.textAlign(p.LEFT);
-			p.text("Zoom: " + String(zoom.toFixed(2)), 10, 100);
-			p.text("Offset: [" + String(offsetX.toFixed(2)) + "," + String(offsetY.toFixed(2)) + "]", 10, 130);
+			// p.fill(255);
+			// p.textAlign(p.LEFT);
+			// p.text("Zoom: " + String(zoom.toFixed(2)), 10, 100);
+			// p.text("Offset: [" + String(offsetX.toFixed(2)) + "," + String(offsetY.toFixed(2)) + "]", 10, 130);
 		};
 
 		function checkDisplay(n) {
 			zoomedGuidedTour = true;
+			guidedTour = true;
 			if (copy.story[currentStageNumber].stage == "explore") {
 				return true;
 			}
@@ -117,10 +118,14 @@
 				return true;
 			}
 			if (copy.story[currentStageNumber].stage == "all_jobs") {
-				guidedTour = false;
 				zoomedGuidedTour = false;
 				return true;
 			}
+			if (copy.story[currentStageNumber].stage == "explore") {
+				guidedTour = false;
+				return true;
+			}
+			
 			return false;
 		}
 
@@ -447,7 +452,6 @@
 			
 			display() {
 				p.noFill();
-				// p.fill(0,200,200, 100);
 				p.ellipseMode(p.CENTER);
 				p.strokeWeight(0.4/zoom);
 				p.stroke("#947594");
@@ -517,7 +521,10 @@
 			        this.alpha = 0; // Start with fully transparent text
 			    }
 
-			    const shouldDisplayText = (this.radius > 30 && !this.checkTextOverlap(otherCircles)) || this.hovered || (!this.checkTextOverlap(otherCircles) && guidedTour && zoomedGuidedTour);
+			   const shouldDisplayText = 
+			    (this.radius > 30 && !this.checkTextOverlap(otherCircles)) || 
+			    this.hovered || 
+			    (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour));
 
 			    // Gradually fade in or out the text
 			    if (shouldDisplayText) {

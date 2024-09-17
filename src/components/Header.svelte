@@ -12,6 +12,9 @@
 </header>
 
 <style>
+	header {
+		pointer-events: none;
+	}
 	.wordmark {
 		max-width: 14em;
 		margin: 0 auto;
@@ -23,6 +26,7 @@
 		border: none;
 		display: block;
 		color: var(--color-fg);
+		pointer-events: auto;
 	}
 
 	.wordmark a:hover {

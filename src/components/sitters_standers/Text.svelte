@@ -26,20 +26,56 @@
 		return percentKeys;
 	}
 
+	function convertToHTML(text) {
+		let finalText = [];
+		if (text != undefined) {
+			let textArray = text.split(/(\n\n|\r\r|\n\r|\r\n)/);
+			textArray.forEach(function(line) {
+				if (line.indexOf("Component|") != -1) {
+					let compName = line.split("|")[1];
+					line = `<svelte:component this=${compName}></svelte:component>`
+				}
+				
+				if (line.indexOf("IMAGE|") != -1) {
+					line = '<div class="imageContainer"><img class="desktopImage" src="assets/leftovers/' + line.replace("IMAGE|","").replace(/(\r\n|\n|\r)/gm, "") + '.svg"/><img class="mobileImage" src="assets/leftovers/' + line.replace("IMAGE|","").replace(/(\r\n|\n|\r)/gm, "") + '_mobile.svg"/></div>';
+				}
+				if (line.indexOf(">>") != -1) {
+					line = "<div class='chartPlaceholder'>" + line + "</div>";
+				}
+				if (/[A-Za-z0-9]/.test(line)) {
+					finalText.push(line);	
+				}				
+			})
+			return wrapInPTags(finalText);
+		}
+	}
+
+	function wrapInPTags(arr) {
+		return arr.map(item => {
+			if (/^<[^>]+>.*<\/[^>]+>$/.test(item)) {
+				return item;
+			} else {
+				return `<p>${item}</p>`;
+			}
+		}).join('');
+	}
+
 	$: {		
 		currentVar;
 	}
 </script>
 
 <div class="question">
-	{@html copy.story[currentStageNumber].text}
+	<div class="text">
+		{@html convertToHTML(copy.story[currentStageNumber].text)}
+	</div>
 	{#if copy.story[currentStageNumber].stage == "explore"}
-		<Pulldown data={getPercentKeys(data)} {currentVar} on:change={handlePulldownChange} />
+	<Pulldown opts={copy.questions} {currentVar} on:change={handlePulldownChange} />
 	{/if}
 	<div class="answers stage_{currentStageNumber}">
-		<button class="answerButton back" on:click={() => button(-1)}><span>←</span> Back</button>
 		{#if currentStageNumber < copy.story.length - 1}
-		<button class="answerButton" on:click={() => button(1)}>Next <span>→</span></button>
+			<button class="answerButton back" on:click={() => button(-1)}><span>←</span> Back</button>
+			<button class="answerButton" on:click={() => button(1)}>Next <span>→</span></button>
 		{/if}
 	</div>	
 </div>

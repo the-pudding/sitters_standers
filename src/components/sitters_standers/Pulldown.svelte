@@ -1,18 +1,19 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 
-	export let data;
-	export let currentVar;
+	export let data, opts, currentVar;
 
 	const dispatch = createEventDispatcher();
 
 	// Watch for changes in currentVar and dispatch the change event
-	$:  dispatch('change', { currentVar });
+	$: {
+		dispatch('change', { currentVar })
+	};
 </script>
 
 <select id="pulldown" bind:value={currentVar}>
-	{#each data as item}
-		<option value={item}>{item}</option>
+	{#each opts as opt}
+		<option value={opt.variable}>{opt.short}</option>
 	{/each}
 </select>
 

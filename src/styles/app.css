@@ -136,6 +136,32 @@ body {
 	color: black;
 	font-weight: bold;
 }
+.question .text span {
+	color: #ff69f2;
+}
+.text span.symbol {
+	color: #ff69f2;
+}
+.text span.headline {
+	font-size: 22px;
+}
+.text span.circle {
+	width: 16px;
+	height: 16px;
+	display: inline-block;
+	border: 1px solid #eee;
+	border-radius: 50%;
+	margin-right: 3px;
+}
+.text span.dot {
+	width: 8px;
+	height: 8px;
+	display: inline-block;
+	margin-right: 3px;
+	margin-bottom: 2px;
+	background: #8f5089;
+	border-radius: 50%;
+}
 .backButton {
 	background: none;
 	padding: 0;
