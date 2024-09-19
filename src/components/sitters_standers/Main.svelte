@@ -42,7 +42,7 @@
 	        .filter(question => question.variable.startsWith("Percent"))
 	        .map(question => [
 	            question.variable,
-	            selectedIndices.includes(Number(question.index)) ? Number(question.threshold) : -1
+	            selectedIndices.includes(Number(question.index)) ? 1 : -1
 	        ]);
 
 	    // Step 1: Collect all the scores
@@ -54,10 +54,10 @@
 	        // Step 2: Calculate the score for each data point
 	        for (let j = 0; j < selectedVariables.length; j++) {
 	            const varname = selectedVariables[j][0];
-	            const threshold = selectedVariables[j][1];
+	            const qanswer = selectedVariables[j][1];
 	            const value = Number(data[i][varname].toString().replace(/[^0-9.]/g, ''));
 
-	            if (threshold == -1) {
+	            if (qanswer == -1) {
 	                data[i].score -= value;
 	            } else {
 	                data[i].score += value;

@@ -159,85 +159,99 @@
 			offsetY = p.lerp(offsetY, offsetYTarget, 0.05)
 		}
 
-		// Handle zooming with mouse wheel
-		p.mouseWheel = (event) => {
-		    // Adjust zoom speed based on the velocity of the scroll (event.delta)
-		    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
-		    let baseZoomSpeed = 0.05 * zoom;            // Base zoom speed proportional to current zoom
-		    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
+		// Function to check if mouse is over the p5.js canvas
+function isMouseOverCanvas() {
+    // Get the element under the mouse
+    let element = document.elementFromPoint(p.mouseX + p.canvas.offsetLeft, p.mouseY + p.canvas.offsetTop);
+    // Return true if the element is the p5.js canvas
+    return element === p.canvas;
+}
 
-		    let previousZoom = zoom;
+// Handle zooming with mouse wheel
+p.mouseWheel = (event) => {
+    if (!isMouseOverCanvas()) return; // Prevent zooming if not over the canvas
 
-		    if (event.delta > 0) {
-		        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom out
-		    } else {
-		        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom in
-		    }
+    // Adjust zoom speed based on the velocity of the scroll (event.delta)
+    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
+    let baseZoomSpeed = 0.05 * zoom; // Base zoom speed proportional to current zoom
+    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
 
-		    // Calculate the difference in zoom and adjust the offset
-		    let zoomChange = zoom / previousZoom;
+    let previousZoom = zoom;
 
-		    // Focus zoom on mouse position
-		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
-		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
-		};
+    if (event.delta > 0) {
+        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom out
+    } else {
+        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom in
+    }
 
-		// Handle panning with mouse drag
-		p.mousePressed = () => {
-			startX = p.mouseX - offsetX;
-			startY = p.mouseY - offsetY;
-		};
+    // Calculate the difference in zoom and adjust the offset
+    let zoomChange = zoom / previousZoom;
 
-		p.mouseDragged = () => {
-			offsetX = p.mouseX - startX;
-			offsetY = p.mouseY - startY;
-		};
+    // Focus zoom on mouse position
+    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
+    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
+};
 
-		// Handle pinch zoom and pan for touchscreens
-		p.touchStarted = () => {
-			if (p.touches.length === 1) {
-		        // Single touch for panning
-				startX = p.touches[0].x - offsetX;
-				startY = p.touches[0].y - offsetY;
-			} else if (p.touches.length === 2) {
-		        // Store the initial positions of two touches for pinch zoom
-				previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
-			}
-		};
+// Handle panning with mouse drag
+p.mousePressed = () => {
+    if (!isMouseOverCanvas()) return; // Prevent panning if not over the canvas
+    startX = p.mouseX - offsetX;
+    startY = p.mouseY - offsetY;
+};
 
-		p.touchMoved = () => {
-			if (p.touches.length === 1) {
-		        // Pan with single finger swipe
-				offsetX = p.touches[0].x - startX;
-				offsetY = p.touches[0].y - startY;
-			} else if (p.touches.length === 2) {
-		        // Pinch to zoom with two fingers
-				let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+p.mouseDragged = () => {
+    if (!isMouseOverCanvas()) return; // Prevent dragging if not over the canvas
+    offsetX = p.mouseX - startX;
+    offsetY = p.mouseY - startY;
+};
 
-		        // Calculate the zoom change based on the distance between two touches
-				if (previousDistance) {
-					let zoomChange = currentDistance / previousDistance;
-					let previousZoom = zoom;
-		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
+// Handle pinch zoom and pan for touchscreens
+p.touchStarted = () => {
+    if (!isMouseOverCanvas()) return; // Prevent touch actions if not over the canvas
+    if (p.touches.length === 1) {
+        // Single touch for panning
+        startX = p.touches[0].x - offsetX;
+        startY = p.touches[0].y - offsetY;
+    } else if (p.touches.length === 2) {
+        // Store the initial positions of two touches for pinch zoom
+        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+    }
+};
 
-		            // Adjust the offset to keep zoom centered between the two touch points
-		            let midX = (p.touches[0].x + p.touches[1].x) / 2;
-		            let midY = (p.touches[0].y + p.touches[1].y) / 2;
-		            offsetX = midX - (midX - offsetX) * zoomChange;
-		            offsetY = midY - (midY - offsetY) * zoomChange;
-		        }
+p.touchMoved = () => {
+    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
+    if (p.touches.length === 1) {
+        // Pan with single finger swipe
+        offsetX = p.touches[0].x - startX;
+        offsetY = p.touches[0].y - startY;
+    } else if (p.touches.length === 2) {
+        // Pinch to zoom with two fingers
+        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-		        // Update previous distance
-		        previousDistance = currentDistance;
-		    }
+        // Calculate the zoom change based on the distance between two touches
+        if (previousDistance) {
+            let zoomChange = currentDistance / previousDistance;
+            let previousZoom = zoom;
+            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
 
-		    return false; // Prevent default behavior (like scrolling the page)
-		};
+            // Adjust the offset to keep zoom centered between the two touch points
+            let midX = (p.touches[0].x + p.touches[1].x) / 2;
+            let midY = (p.touches[0].y + p.touches[1].y) / 2;
+            offsetX = midX - (midX - offsetX) * zoomChange;
+            offsetY = midY - (midY - offsetY) * zoomChange;
+        }
 
-		p.touchEnded = () => {
-		    // Reset after touch ends
-			previousDistance = null;
-		};
+        // Update previous distance
+        previousDistance = currentDistance;
+    }
+
+    return false; // Prevent default behavior (like scrolling the page)
+};
+
+p.touchEnded = () => {
+    // Reset after touch ends
+    previousDistance = null;
+};
 
 		let resizeTimeout;
 

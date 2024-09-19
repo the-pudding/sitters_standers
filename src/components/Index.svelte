@@ -8,9 +8,9 @@
 		...question,
 		index: index
 	}));
-	copy.first_question[0].options = copy.questions
-		.filter(question => question.excluded !== "1")
-		.map(question => question.short);
+	// copy.first_question[0].options = copy.questions
+	// 	.filter(question => question.excluded !== "1")
+	// 	.map(question => question.short);
 	const data = getContext("data");
 </script>
 

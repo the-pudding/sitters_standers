@@ -13,7 +13,7 @@
 
 <select id="pulldown" bind:value={currentVar}>
 	{#each opts as opt}
-		<option value={opt.variable}>{opt.short}</option>
+		<option value={opt.variable}>{@html opt.short}</option>
 	{/each}
 </select>
 
@@ -23,5 +23,8 @@
 		top: 30%;
 		width: 300px;
 		z-index: 99999;
+	}
+	option {
+		height: 30px;
 	}
 </style>

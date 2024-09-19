@@ -22,7 +22,13 @@
 	--font-form: var(--sans);
 	/*	--color-bg: var(--color-white);*/
 	--color-bg: #211d21;
+
+	--color-dark-purple: #141314;
+	--color-off-purple: #e0d1e8;
 	--color-light-purple: #947594;
+	--color-lighter-purple: #efb9f0;
+	--color-bright-purple: #ff69f2;
+
 	--color-fg: var(--color-gray-900);
 	--color-primary: var(--color-black);
 	--color-link: var(--color-black);
@@ -98,6 +104,7 @@ header {
 	position: relative;
 	z-index: 99;
 }
+
 body {
 	overflow: hidden;
 }
@@ -106,6 +113,8 @@ body {
 	top: 0;
 	left: 0;
 	font-family: var(--sans);
+	color: var(--color-off-purple);
+	font-size: 15px;
 }
 
 /*Question box*/
@@ -127,7 +136,44 @@ body {
 }
 .answerButton {
 	width: 48%;
+	font-size: 15px;
+	background: var(--color-off-purple);
+	color: var(--color-dark-purple);
 }
+.answerButton:hover {
+	background: var(--color-off-purple);
+	color: black;
+}
+.answerItem {
+	display: block;
+	position: relative;
+	width: 100%;
+	padding: 10px 0;
+	background: var(--color-dark-purple);
+	border: 1px solid var(--color-light-purple);
+	color: var(--color-lighter-purple);
+	margin-top: -1px;
+	z-index: 1;
+	border-radius: 0;
+}
+.answerItem:hover {
+	z-index: 2;
+	background: var(--color-dark-purple);
+	color: #fff;
+}
+.answerItem.selected {
+	background: var(--color-lighter-purple);
+	color: black;
+	border: 1px solid var(--color-lighter-purple);
+}
+.panel .answerItem {
+	font-size: 14px;
+}
+.hideShow {
+	background: var(--color-dark-purple);
+	color: var(--color-off-purple);
+}
+
 .stage_0 .back {
 	pointer-events: none;
 	opacity: 0;
@@ -137,13 +183,17 @@ body {
 	font-weight: bold;
 }
 .question .text span {
-	color: #ff69f2;
+	color: var(--color-bright-purple);
 }
-.text span.symbol {
-	color: #ff69f2;
+.text p:first-child {
+	margin-top: 0px;
 }
 .text span.headline {
-	font-size: 22px;
+	
+}
+
+.text span.symbol {
+	color: var(--color-bright-purple);
 }
 .text span.circle {
 	width: 16px;
@@ -161,16 +211,4 @@ body {
 	margin-bottom: 2px;
 	background: #8f5089;
 	border-radius: 50%;
-}
-.backButton {
-	background: none;
-	padding: 0;
-	margin-bottom: 10px;
-	font-size: 14px;
-	text-transform: uppercase;
-	color: #999;
-}
-.backButton:hover {
-	background: none;
-	color: black;
 }
