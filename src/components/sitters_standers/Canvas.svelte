@@ -34,11 +34,11 @@
 		p.setup = () => {
 			w = p.constrain(p.windowWidth,800,6000);
 			h = p.windowHeight - 6;
-			if (p.windowWidth < 800) {
-				zoom = 0.45;
-				// dotDivider = 2;
-				h = p.windowHeight*2;
-			}
+			// if (p.windowWidth < 800) {
+			// 	zoom = 0.45;
+			// 	// dotDivider = 2;
+			// 	h = p.windowHeight*2;
+			// }
 			
 			p.createCanvas(w, h);
 			
