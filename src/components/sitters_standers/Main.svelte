@@ -154,7 +154,13 @@
 		left: 0px;
 		top: 0px;
 		height: 100vh;
-		background: #211d21;
+		background: var(--color-bg);
+	}
+	@media (width <= 800px) {
+		.container {
+			height: 80vh;
+			bottom: 20vh;
+		}
 	}
 	.canvasContainer {
 		cursor: move; /* fallback if grab cursor is unsupported */

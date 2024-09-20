@@ -21,9 +21,9 @@
 	--font-body: var(--serif);
 	--font-form: var(--sans);
 	/*	--color-bg: var(--color-white);*/
-	--color-bg: #211d21;
+	--color-bg: #150317;
 
-	--color-dark-purple: #141314;
+	--color-dark-purple: #140014;
 	--color-off-purple: #e0d1e8;
 	--color-light-purple: #947594;
 	--color-lighter-purple: #efb9f0;
@@ -107,6 +107,7 @@ header {
 
 body {
 	overflow: hidden;
+	background: var(--color-bg);
 }
 #content {
 	position: absolute;
@@ -123,16 +124,29 @@ body {
 	right: 10px;
 	width: 450px;
 	max-width: 90%;
-	background: black;
+	background: rgba(0,0,0,0.8);
 	bottom: 50px;
 	padding: 20px;
 	color: white;
+}
+@media (width <= 800px) {
+	.question {
+	bottom: 0.2vh;
+	max-width: 100%;
+	width: calc(100% - 20px);
+	background: none;
+	right: 10px;
+	font-size: 14px;
+	padding: 0px;
+	margin-bottom: 10px;
+	}
 }
 
 .answers {
 	display: block;
 	width: 100%;
 	margin-top: 10px;
+	text-align: center;
 }
 .answerButton {
 	width: 48%;
@@ -182,8 +196,16 @@ body {
 	color: black;
 	font-weight: bold;
 }
+.question .text {
+/*	text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;*/
+}
 .question .text span {
 	color: var(--color-bright-purple);
+}
+.text p a {
+/*	color: var(--color-lighter-purple);*/
+	color: white;
+	text-decoration: underline;
 }
 .text p:first-child {
 	margin-top: 0px;

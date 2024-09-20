@@ -32,6 +32,7 @@
     -2px 2px 0px var(--color-bg),
     2px -2px 0px var(--color-bg);
 	}
+
 	.yaxis {
 		position: absolute;
 		left: 5px;
@@ -53,6 +54,7 @@
 		bottom: 40px;
 		left: 5px;
 	}
+
 	.xaxis {
 		position: absolute;
 		left: 5px;
@@ -61,6 +63,7 @@
 		width: 100%;
 		height: 30px;
 	}
+
 	.xaxis .left {
 		position: absolute;
 		left: 5px;
@@ -73,5 +76,24 @@
 		bottom: -25px;
 		width: 170px;
 		text-align: right;
+	}
+	@media (width <= 800px) {
+		.yaxis { 
+			left: auto;
+			right: 10px;
+		}
+		.yaxis div {
+			width: 100%;
+			text-align: right;
+		}
+		.yaxis, .xaxis {
+			font-size: 14px;
+		}
+		.yaxis .bottom {
+			bottom: 35px;
+		}
+		.xaxis .left, .xaxis .right {
+			bottom: -23px;
+		}
 	}
 </style>

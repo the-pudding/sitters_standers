@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
 
 	export let currentStageNumber, copy, data, currentVar;
@@ -59,6 +60,33 @@
 			}
 		}).join('');
 	}
+
+	// Handle key events for navigation
+	function handleKeydown(event) {
+		if (event.key === 'ArrowRight') {
+			if (currentStageNumber < copy.story.length -1) {
+				button(1);
+			}
+		} else if (event.key === 'ArrowLeft') {
+			if (currentStageNumber > 0) {
+				button(-1);
+			}
+		}
+	}
+
+	// Add and remove event listeners when component mounts and unmounts
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('keydown', handleKeydown);
+		}
+	});
+
+	// Cleanup event listener
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('keydown', handleKeydown);
+		}
+	});
 
 	$: {		
 		currentVar;

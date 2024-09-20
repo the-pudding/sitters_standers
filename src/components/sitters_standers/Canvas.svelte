@@ -5,7 +5,7 @@
 	export let data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies;
 
 	let circles = [];
-	const dotSize = 5; 
+	let dotSize = 5; 
 	export let currentVar;
 	let new_currentVar = -1;
 	let prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
@@ -24,7 +24,7 @@
 	let startTouches = []; // To store touch points for pinch zoom
 	let previousDistance = null; // To store the previous distance between two touches
 	let atlasGrotesk;
-	let dotDivider = 1;
+	let marginTop = 100;
 
 	const sketch = (p) => {
 
@@ -34,12 +34,16 @@
 		p.setup = () => {
 			w = p.constrain(p.windowWidth,800,6000);
 			h = p.windowHeight - 6;
-			// if (p.windowWidth < 800) {
-			// 	zoom = 0.45;
-			// 	// dotDivider = 2;
-			// 	h = p.windowHeight*2;
-			// }
-			
+			dotSize = 5;
+			if (p.windowWidth < 800) {
+				h = p.windowHeight * 0.8 - 6;
+				dotSize = 3;
+				marginTop = 50;
+			}
+			if (p.windowWidth < 600) {
+				dotSize = 2;
+			}
+
 			p.createCanvas(w, h);
 			
 
@@ -48,13 +52,14 @@
 				circles.push(circle);
 			}
 			p.canvas.oncontextmenu = () => false;
+			resize();
 		};
 
 		p.draw = () => {
 			setStage();
 			p.clear();
 			p.smooth();
-			p.background("#211d21");
+			p.background("#150317");
 			p.textFont(atlasGrotesk);
 			p.push();
 			p.translate(offsetX, offsetY);
@@ -89,17 +94,10 @@
 			}
 
 			if (currentVar != new_currentVar) {
-				// for (let i = 0; i < circles.length; i++) {
-				// 	circles[i].updateGroup();
-				// }
 				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 				new_currentVar = currentVar;
 			}
 			p.pop();
-			// p.fill(255);
-			// p.textAlign(p.LEFT);
-			// p.text("Zoom: " + String(zoom.toFixed(2)), 10, 100);
-			// p.text("Offset: [" + String(offsetX.toFixed(2)) + "," + String(offsetY.toFixed(2)) + "]", 10, 130);
 		};
 
 		function checkDisplay(n) {
@@ -160,104 +158,111 @@
 		}
 
 		// Function to check if mouse is over the p5.js canvas
-function isMouseOverCanvas() {
-    // Get the element under the mouse
-    let element = document.elementFromPoint(p.mouseX + p.canvas.offsetLeft, p.mouseY + p.canvas.offsetTop);
-    // Return true if the element is the p5.js canvas
-    return element === p.canvas;
-}
+		function isMouseOverCanvas() {
+		    // Get the element under the mouse
+		    let element = document.elementFromPoint(p.mouseX + p.canvas.offsetLeft, p.mouseY + p.canvas.offsetTop);
+		    // Return true if the element is the p5.js canvas
+		    return element === p.canvas;
+		}
 
-// Handle zooming with mouse wheel
-p.mouseWheel = (event) => {
-    if (!isMouseOverCanvas()) return; // Prevent zooming if not over the canvas
+		// Handle zooming with mouse wheel
+		p.mouseWheel = (event) => {
+		    if (!isMouseOverCanvas()) return; // Prevent zooming if not over the canvas
 
-    // Adjust zoom speed based on the velocity of the scroll (event.delta)
-    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
-    let baseZoomSpeed = 0.05 * zoom; // Base zoom speed proportional to current zoom
-    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
+		    // Adjust zoom speed based on the velocity of the scroll (event.delta)
+		    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
+		    let baseZoomSpeed = 0.05 * zoom; // Base zoom speed proportional to current zoom
+		    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
 
-    let previousZoom = zoom;
+		    let previousZoom = zoom;
 
-    if (event.delta > 0) {
-        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom out
-    } else {
-        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom in
-    }
+		    if (event.delta > 0) {
+		        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom out
+		    } else {
+		        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom in
+		    }
 
-    // Calculate the difference in zoom and adjust the offset
-    let zoomChange = zoom / previousZoom;
+		    // Calculate the difference in zoom and adjust the offset
+		    let zoomChange = zoom / previousZoom;
 
-    // Focus zoom on mouse position
-    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
-    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
-};
+		    // Focus zoom on mouse position
+		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
+		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
+		};
 
-// Handle panning with mouse drag
-p.mousePressed = () => {
-    if (!isMouseOverCanvas()) return; // Prevent panning if not over the canvas
-    startX = p.mouseX - offsetX;
-    startY = p.mouseY - offsetY;
-};
+		// Handle panning with mouse drag
+		p.mousePressed = () => {
+		    if (!isMouseOverCanvas()) return; // Prevent panning if not over the canvas
+		    startX = p.mouseX - offsetX;
+		    startY = p.mouseY - offsetY;
+		};
 
-p.mouseDragged = () => {
-    if (!isMouseOverCanvas()) return; // Prevent dragging if not over the canvas
-    offsetX = p.mouseX - startX;
-    offsetY = p.mouseY - startY;
-};
+		p.mouseDragged = () => {
+		    if (!isMouseOverCanvas()) return; // Prevent dragging if not over the canvas
+		    offsetX = p.mouseX - startX;
+		    offsetY = p.mouseY - startY;
+		};
 
-// Handle pinch zoom and pan for touchscreens
-p.touchStarted = () => {
-    if (!isMouseOverCanvas()) return; // Prevent touch actions if not over the canvas
-    if (p.touches.length === 1) {
-        // Single touch for panning
-        startX = p.touches[0].x - offsetX;
-        startY = p.touches[0].y - offsetY;
-    } else if (p.touches.length === 2) {
-        // Store the initial positions of two touches for pinch zoom
-        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
-    }
-};
+		// Handle pinch zoom and pan for touchscreens
+		p.touchStarted = () => {
+		    if (!isMouseOverCanvas()) return; // Prevent touch actions if not over the canvas
+		    if (p.touches.length === 1) {
+		        // Single touch for panning
+		        startX = p.touches[0].x - offsetX;
+		        startY = p.touches[0].y - offsetY;
+		    } else if (p.touches.length === 2) {
+		        // Store the initial positions of two touches for pinch zoom
+		        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		    }
+		};
 
-p.touchMoved = () => {
-    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
-    if (p.touches.length === 1) {
-        // Pan with single finger swipe
-        offsetX = p.touches[0].x - startX;
-        offsetY = p.touches[0].y - startY;
-    } else if (p.touches.length === 2) {
-        // Pinch to zoom with two fingers
-        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		p.touchMoved = () => {
+		    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
+		    if (p.touches.length === 1) {
+		        // Pan with single finger swipe
+		        offsetX = p.touches[0].x - startX;
+		        offsetY = p.touches[0].y - startY;
+		    } else if (p.touches.length === 2) {
+		        // Pinch to zoom with two fingers
+		        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-        // Calculate the zoom change based on the distance between two touches
-        if (previousDistance) {
-            let zoomChange = currentDistance / previousDistance;
-            let previousZoom = zoom;
-            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
+		        // Calculate the zoom change based on the distance between two touches
+		        if (previousDistance) {
+		            let zoomChange = currentDistance / previousDistance;
+		            let previousZoom = zoom;
+		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
 
-            // Adjust the offset to keep zoom centered between the two touch points
-            let midX = (p.touches[0].x + p.touches[1].x) / 2;
-            let midY = (p.touches[0].y + p.touches[1].y) / 2;
-            offsetX = midX - (midX - offsetX) * zoomChange;
-            offsetY = midY - (midY - offsetY) * zoomChange;
-        }
+		            // Adjust the offset to keep zoom centered between the two touch points
+		            let midX = (p.touches[0].x + p.touches[1].x) / 2;
+		            let midY = (p.touches[0].y + p.touches[1].y) / 2;
+		            offsetX = midX - (midX - offsetX) * zoomChange;
+		            offsetY = midY - (midY - offsetY) * zoomChange;
+		        }
 
-        // Update previous distance
-        previousDistance = currentDistance;
-    }
+		        // Update previous distance
+		        previousDistance = currentDistance;
+		    }
 
-    return false; // Prevent default behavior (like scrolling the page)
-};
+		    return false; // Prevent default behavior (like scrolling the page)
+		};
 
-p.touchEnded = () => {
-    // Reset after touch ends
-    previousDistance = null;
-};
+		p.touchEnded = () => {
+		    // Reset after touch ends
+		    previousDistance = null;
+		};
 
 		let resizeTimeout;
 
 		p.windowResized = () => {
+			resize();
+		};
+
+		function resize() {
 			w = p.windowWidth;
 			h = p.windowHeight - 6;
+			if (p.windowWidth < 800) {
+				h = p.windowHeight * 0.8;
+			}
 			p.resizeCanvas(w, h);
 
 			clearTimeout(resizeTimeout);
@@ -267,20 +272,14 @@ p.touchEnded = () => {
 					circles[i].updateGroup();
 				}
 			}, 100);
-		};
+		}
 
 		class Circle {
 			constructor(obj, index) {
 				this.obj = obj;
 				this.index = index;
-				
-				if (obj.dots/dotDivider <= 1) {
-					this.radius = dotSize*3;
-				} else if (obj.dots/dotDivider <= 7) {
-					this.radius = dotSize*5;
-				} else {
-					this.radius = Math.sqrt(obj.TOT_EMP) * multiplier;
-				}
+				this.radius = this.calculateOptimalRadius(obj.dots, dotSize);
+				this.currentColors = Array(this.obj.dots).fill(p.color("#523c50"));
 				this.center = p.createVector(
 					p.random(this.radius, w - this.radius),
 					-200
@@ -290,11 +289,24 @@ p.touchEnded = () => {
 				this.target = this.center.copy();
 				this.maxSpeed = 3;
 				this.maxForce = 0.5;
-				this.peoplePositions = this.calculatePeoplePositions(obj.dots/dotDivider);
+				this.peoplePositions = this.calculatePeoplePositions(obj.dots);
 				this.hovered = false;
 				this.score = 0;
 				this.textDisplayed = false;
+				this.varPct = 0; // Initialize varPct
+        		this.prevVarPct = 0; // Initialize previous varPct
 			}
+
+			calculateOptimalRadius(totalDots, dotSize) {
+		        if (totalDots <= 1) {
+			        return 1 * dotSize*3; // Only the center dot, hence 1 circle
+			    }
+
+			    // The number of concentric circles is the largest floor value of sqrt(i) for i up to totalPeople - 1
+			    let lastIndex = totalDots - 1;
+			    let numberOfCircles = Math.floor(Math.sqrt(lastIndex)) + 2; // Add 1 because the first circle is counted from 0
+			    return numberOfCircles*dotSize*1.3;
+		    }
 
 			calculatePeoplePositions(totalPeople) {
 				let positions = [];
@@ -318,29 +330,31 @@ p.touchEnded = () => {
 						y = centerY + currentRadius * p.sin(angle);
 					}
 
-					// Check if the new position is within the parent circle
-					if (p.dist(centerX, centerY, x, y) + dotSize / 2 <= this.radius) {
-						positions.push(p.createVector(x, y));
-					}
+					positions.push(p.createVector(x, y));
 				}
 				return positions;
 			}
 
 			updateGroup() {
-				this.score = 0;
-				for (let i = 0; i < currentQuestionNum; i++) {
-					const question = questions[i];
-					let value = String(this.obj[question]).replace(/[^0-9.]/g, '');
-					if (value != "" && Number(value) > 0) {
-						if (Number(value) > Number(copy.questions[i].threshold) && currentData[i] == 0 && value > 0) {
-							this.score = 1;	
-						}
-					}
-				}
+		        this.score = 0;
+		        for (let i = 0; i < currentQuestionNum; i++) {
+		            const question = questions[i];
+		            let value = String(this.obj[question]).replace(/[^0-9.]/g, '');
+		            if (value !== "" && Number(value) > 0) {
+		                if (
+		                    Number(value) > Number(copy.questions[i].threshold) &&
+		                    currentData[i] === 0 &&
+		                    value > 0
+		                ) {
+		                    this.score = 1;
+		                }
+		            }
+		        }
 
-				this.varPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
-				this.prevVarPct = Number(String(this.obj[prevVar]).replace(/[^0-9.]/g, ''));
-			}
+		        // Smoothly transition varPct using lerp for a smoother visual effect
+		        let targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
+		        this.varPct = p.lerp(this.varPct, targetVarPct, 0.1); // Gradually move towards the target value
+		    }
 
 			
 
@@ -383,8 +397,8 @@ p.touchEnded = () => {
 
 			update() {
 			    // Set the target x and y positions based on data
-			    this.target.x = p.map(data[this.index].score, minmax[0], minmax[1], 0, w); // Adjust x based on score
-			    this.target.y = p.map(data[this.index].A_MEAN, 0, 200000, h, 0); // Adjust y based on A_MEAN
+			    this.target.x = p.constrain(p.map(data[this.index].score, minmax[0], minmax[1], 0, w), 0, w); // Adjust x based on score
+			    this.target.y = p.constrain(p.map(data[this.index].A_MEAN, 20000, 180000, h, marginTop), marginTop, h); // Adjust y based on A_MEAN
 
 			    // Calculate the direction to the target position for both x and y
 			    let directionToTarget = p.createVector(this.target.x - this.center.x, this.target.y - this.center.y);
@@ -464,30 +478,41 @@ p.touchEnded = () => {
 			}
 
 			
-			display() {
-				p.noFill();
-				p.ellipseMode(p.CENTER);
-				p.strokeWeight(0.4/zoom);
-				p.stroke("#947594");
-				if (this.hovered || this.textDisplayed) {
-					p.stroke("#ffffff")
-					p.strokeWeight(0.4/zoom);
-				}
-				p.circle(this.center.x, this.center.y, this.radius);
-				// Display each Person as a small circle
+			 display() {
+		        p.noFill();
+		        p.ellipseMode(p.CENTER);
+		        p.strokeWeight(0.4 / zoom);
+		        p.stroke("#947594");
 
-				const dotsToFill = Math.round(this.obj.dots/dotDivider * (this.varPct / 100));
-				for (let i = 0; i < this.peoplePositions.length; i++) {
-					p.noStroke();
-					if (i < dotsToFill) {
-						p.fill("#ff69f2"); // Fill color for dots that should be filled
-					} else {
-						p.fill("#523c50"); // Fill color for remaining dots
-					}
-					p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
-				}
-				
-			}
+		        if (this.hovered || this.textDisplayed) {
+		            p.stroke("#ffffff");
+		            p.strokeWeight(0.4 / zoom);
+		        }
+
+		        p.circle(this.center.x, this.center.y, this.radius);
+
+		        const transitionSpeed = 0.3; // Smooth transition speed
+		        const filledColor = p.color("#ff69f2");
+		        const unfilledColor = p.color("#523c50");
+
+		        // Calculate how many dots to fill based on smoothed varPct
+		        const dotsToFill = Math.round(this.obj.dots * (this.varPct / 100));
+
+		        // Display each dot with smooth color transitions
+		        for (let i = 0; i < this.peoplePositions.length; i++) {
+		            p.noStroke();
+
+		            // Determine target color based on the smoothed fill state
+		            let targetColor = i < dotsToFill ? filledColor : unfilledColor;
+
+		            // Smoothly interpolate the current color towards the target color
+		            this.currentColors[i] = p.lerpColor(this.currentColors[i], targetColor, transitionSpeed);
+
+		            // Set the fill to the interpolated color
+		            p.fill(this.currentColors[i]);
+		            p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
+		        }
+		    }
 
 			checkTextOverlap(otherCircles) {
 			    // Approximate text height and width based on zoom and font size
