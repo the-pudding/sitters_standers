@@ -2,7 +2,7 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies;
+	export let data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue;
 
 	let circles = [];
 	let dotSize = 5; 
@@ -452,7 +452,7 @@
 			    	let bounce = relativeVelocity.dot(direction);
 
 			        // Reduce bounce effect significantly
-			        let bounceFactor = 0.2; // Further reduce bounce intensity
+			        let bounceFactor = 0.4; // Further reduce bounce intensity
 			        let bounceEffect = direction.copy().mult(bounce * bounceFactor);
 			        this.velocity.sub(bounceEffect);
 			        other.velocity.add(bounceEffect);
@@ -482,11 +482,17 @@
 		        p.noFill();
 		        p.ellipseMode(p.CENTER);
 		        p.strokeWeight(0.4 / zoom);
+
 		        p.stroke("#947594");
 
 		        if (this.hovered || this.textDisplayed) {
 		            p.stroke("#ffffff");
 		            p.strokeWeight(0.4 / zoom);
+		        }
+
+		        if (searchValue == this.obj.OCCUPATION) {
+		        	p.stroke("#ffffff");
+		        	p.strokeWeight(1 / zoom);
 		        }
 
 		        p.circle(this.center.x, this.center.y, this.radius);
@@ -560,10 +566,16 @@
 			        this.alpha = 0; // Start with fully transparent text
 			    }
 
-			   const shouldDisplayText = 
+			   let shouldDisplayText = 
 			    (this.radius > 30 && !this.checkTextOverlap(otherCircles)) || 
 			    this.hovered || 
 			    (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour));
+
+			    if (searchValue != "" && searchValue != this.obj.OCCUPATION) {
+			    	shouldDisplayText = false;
+			    } else if (searchValue != "" && searchValue == this.obj.OCCUPATION) {
+			    	shouldDisplayText = true;
+			    }
 
 			    // Gradually fade in or out the text
 			    if (shouldDisplayText) {

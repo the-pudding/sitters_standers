@@ -1,12 +1,20 @@
 <script>
 	import { fly, fade } from 'svelte/transition'; // Import the fly transition
 	import { onMount, onDestroy } from 'svelte';
-	export let copy;
+	import Fuzzy from "svelte-fuzzy";
+
+	export let copy, data;
 	export let selectedIndices;
 	export let introActive;
+	export let searchValue;
 
 	let shown = true;
+	let jobSearchShown = false;
 	let flyValue = 200;
+	let query;
+	let prev_query;
+	let formatted = [];
+	let options = { keys: ["OCCUPATION"] };
 
 	const questionOrder = ["intro","stand_sit","body","other","environment"];
 	const buttonOrder = ["Start <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Let's go <span>→</span>"]
@@ -21,6 +29,19 @@
 
 	function toggleShown() {
 		shown = !shown;
+		if (shown) {
+			jobSearchShown = false;
+		}
+	}
+	function toggleJobSearch() {
+		jobSearchShown = !jobSearchShown;
+		if (jobSearchShown) {
+			shown = false;
+		}
+		if (!jobSearchShown) {
+			searchValue = "";
+			query = "";
+		}
 	}
 
 	function buttonBack() {
@@ -28,6 +49,16 @@
 			questionNumber -= 1;
 			flyValue = -200;
 		}
+	}
+
+	function searchJob(j) {
+		searchValue = j.map(obj => obj.text).join('');
+		query = searchValue;
+	}
+
+	function inputFocus() {
+		query = "";
+		searchValue = "";
 	}
 
 	function buttonClicked() {
@@ -62,7 +93,7 @@
 		}
 	});
 	$: {
-		selectedIndices, introActive;
+		selectedIndices, introActive, searchValue, formatted;
 	}
 </script>
 
@@ -127,7 +158,7 @@
 {/if}
 
 {#if shown}
-<div class="panel">
+<div class="panel jobRequirement">
 	{#each copy.questions as option}
 	<button 
 	class="answerItem {selectedIndices.includes(option.index) ? 'selected' : ''}" 
@@ -138,13 +169,40 @@
 </div>
 {/if}
 
+{#if jobSearchShown}
+<div class="panel jobSearch">
+	<input bind:value={query}  on:focus={inputFocus} placeholder="Search job titles..."/>
+	<Fuzzy {query} {data} {options} bind:formatted />
+	{#if searchValue == ""}
+	{#each formatted.slice(0, 8) as item}
+	{#each item as line}
+	<button class="answerItem" on:click={() => searchJob(line)}>
+		{#each line as { matches, text }}
+			{text}
+		{/each}
+	</button>
+	{/each}
+	{/each}
+	{/if}
+</div>
+{/if}
+
 
 {#if !introActive}
-<button class="hideShow" on:click={toggleShown}>
+<button class="toolbutton hideShow" class:selected={shown} on:click={toggleShown}>
 	{#if shown}
-	x Close job requirements
+	x Requirements
 	{:else}
-	✎ Edit job requirements
+	✎ Requirements
+	{/if}
+</button>
+<button class="toolbutton jobSearch" class:selected={jobSearchShown} on:click={toggleJobSearch}>
+	{#if !jobSearchShown && searchValue != ""}
+	x Search jobs
+	{:else if jobSearchShown || searchValue != ""}
+	x Clear search
+	{:else}
+	🔍 Search jobs
 	{/if}
 </button>
 {/if}
@@ -179,18 +237,33 @@
 		z-index: 10000;
 	}
 	.panel {
-		background: none;
+		background: var(--color-dark-purple);;
 		position: fixed;
 		left: auto;
 		right: 20px;
 		border: 1px solid var(--color-light-purple);
-		top: 55px;
-		width: 320px;
-		height: 50vh;
+		top: 53px;
+		width: 279px;
 		padding: 0px;
-		overflow-y: scroll;
-		scrollbar-width: thin;
+		scrollbar-width: inherit;
 		scrollbar-color: var(--color-light-purple) var(--color-dark-purple);
+		user-select: none;
+	}
+	.panel.jobRequirement {
+		height: 50vh;
+		max-height: 500px;
+		overflow-y: scroll;
+	}
+	.panel.jobSearch {
+		max-height: 500px;
+	}
+	.jobSearch input {
+		width: 100%;
+		border-radius: 0;
+	}
+	.jobSearch input:focus {
+		outline: 0;
+		border: none;
 	}
 	.textContainer {
 		max-width: 320px;
@@ -233,21 +306,38 @@
 		margin-top: 20px;
 	}
 
-	.hideShow {
+	.toolbutton {
+		background: var(--color-dark-purple);
+		color: var(--color-off-purple);
 		position: fixed;
-		right: 20px;
-		top: 20px;
 		background: var(--color-dark-purple);
 		border: 1px solid #473847;
 		cursor: pointer;
-		font-size: 14px;
+		font-size: 13px;
 		z-index: 10001;
+		width: 140px;
+		text-align: center;
+		border-radius: 0px;
+		user-select: none;
 	}
-	.hideShow:hover {
-		border: 1px solid #755475;
+	.toolbutton.selected {
+		background: var(--color-light-purple);
+		border: 1px solid var(--color-light-purple);
+	}
+	.toolbutton.hideShow {
+		right: 20px;
+		top: 20px;
+	}
+	.toolbutton.jobSearch {
+		right: 159px;
+		top: 20px;
+	}
+	.toolbutton:hover {
+		color: white;
+		z-index: 99;
 	}
 	@media (width <= 800px) {
-		.hideShow {
+		.toolbutton {
 			display: none;
 		}
 	}

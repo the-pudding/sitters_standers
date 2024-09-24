@@ -3,7 +3,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
 
-	export let currentStageNumber, copy, data, currentVar;
+	export let currentStageNumber, copy, data, currentVar, searchValue;
 
 	const dispatch = createEventDispatcher();
 
@@ -74,6 +74,14 @@
 		}
 	}
 
+	function skip() {
+		if (currentStageNumber == copy.story.length - 1) {
+			button(-currentStageNumber);
+		} else {
+			button(copy.story.length - currentStageNumber - 1);	
+		}
+	}
+
 	// Add and remove event listeners when component mounts and unmounts
 	onMount(() => {
 		if (typeof window !== 'undefined') {
@@ -90,24 +98,54 @@
 
 	$: {		
 		currentVar;
+		if (copy.story[currentStageNumber].job != undefined) {
+			searchValue = copy.story[currentStageNumber].job;
+		} else {
+			searchValue = "";
+		}
 	}
 </script>
 
 <div class="question">
+	<div class="progressBar" style="width: {currentStageNumber/(copy.story.length - 1)*100}%"></div>
+	<div class="kicker">{copy.story[currentStageNumber].cat}</div>
 	<div class="text">
 		{@html convertToHTML(copy.story[currentStageNumber].text)}
 	</div>
-	{#if copy.story[currentStageNumber].stage == "explore"}
-	<Pulldown opts={copy.questions} {currentVar} on:change={handlePulldownChange} />
-	{/if}
+	
 	<div class="answers stage_{currentStageNumber}">
 		{#if currentStageNumber < copy.story.length - 1}
 			<button class="answerButton back" on:click={() => button(-1)}><span>←</span> Back</button>
 			<button class="answerButton" on:click={() => button(1)}>Next <span>→</span></button>
 		{/if}
-	</div>	
+		{#if copy.story[currentStageNumber].stage == "explore"}
+		<Pulldown opts={copy.questions} {currentVar} on:change={handlePulldownChange} />
+		{/if}
+	</div>
+	<button class="skipToExplore" on:click={skip}>
+		{#if currentStageNumber < copy.story.length - 1}
+		Skip to explore
+		{:else}
+		Reset to start
+		{/if}
+	</button>
 </div>
 
 <style>
-
+.skipToExplore {
+	background: none;
+	color: white;
+	text-align: left;
+	padding: 0;
+	margin-top: 10px;
+	font-size: 13px;
+	color: var(--color-light-purple);
+	position: absolute;
+	bottom: 15px;
+	left: 10px;
+}
+.skipToExplore:hover {
+	color: var(--color-off-purple);
+	text-decoration: underline;
+}
 </style>

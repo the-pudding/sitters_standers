@@ -19,9 +19,10 @@
 
 <style>
 	#pulldown {
-		left: 10px;
-		top: 30%;
-		width: 300px;
+		left: 2px;
+		bottom: 0px;
+		position: absolute;
+		width: calc(100% - 5px);
 		z-index: 99999;
 	}
 	option {
