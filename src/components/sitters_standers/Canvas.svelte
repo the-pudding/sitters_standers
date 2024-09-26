@@ -12,9 +12,10 @@
 	let multiplier = 0.038;
 	let guidedTour = true;
 	let zoomedGuidedTour = true;
+	let job_hl_index = 0;
 
-	let zoom = 1;       // Zoom level
-	let zoomTarget = 1;
+	let zoom = 4;       // Zoom level
+	let zoomTarget = 4;
 	let zoomMinMax = [0.2, 6];
 	let offsetX = 0;    // X offset for panning
 	let offsetXTarget = 0;
@@ -25,6 +26,9 @@
 	let previousDistance = null; // To store the previous distance between two touches
 	let atlasGrotesk;
 	let marginTop = 100;
+	const marginBottom = 170;
+
+
 
 	const sketch = (p) => {
 
@@ -33,12 +37,11 @@
 		}
 		p.setup = () => {
 			w = p.constrain(p.windowWidth,800,6000);
-			h = p.windowHeight - 6;
-			dotSize = 5;
-			if (p.windowWidth < 800) {
-				h = p.windowHeight * 0.8 - 6;
+			// h = p.windowHeight - 6;
+			h = p.windowHeight - marginBottom;
+			dotSize = 4;
+			if (p.windowWidth < 1500) {
 				dotSize = 3;
-				marginTop = 50;
 			}
 			if (p.windowWidth < 600) {
 				dotSize = 2;
@@ -115,6 +118,14 @@
 			if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
 				return true;
 			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_zoomout") {
+				zoomedGuidedTour = false;
+				return true;
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_hl") {
+				zoomedGuidedTour = false;
+				return true;
+			}
 			if (copy.story[currentStageNumber].stage == "all_jobs") {
 				zoomedGuidedTour = false;
 				return true;
@@ -135,13 +146,19 @@
 				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 4);
 			}
 			if (copy.story[currentStageNumber].stage == "other_similar_jobs") {
-				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 1);
+				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 0.9);
 			}
 			if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs") {
-				centerAndZoomOnCoordinate(w/2, h/2, .9);
+				centerAndZoomOnCoordinate(w/2, h/2, .7);
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_zoomout") {
+				centerAndZoomOnCoordinate(w/2, h/2, 0.6);
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_hl") {
+				centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 1.2);
 			}
 			if (copy.story[currentStageNumber].stage == "all_jobs") {
-				centerAndZoomOnCoordinate(w/2, h/2, .9);
+				centerAndZoomOnCoordinate(w/2, h/2, 1);
 			}
 		}
 
@@ -152,9 +169,9 @@
 		    // // Calculate the offset to center the target coordinate on the canvas
 			offsetXTarget = p.width / 2 - targetX * zoomTarget;
 			offsetYTarget = p.height / 2 - targetY * zoomTarget;
-			zoom = p.lerp(zoom, zoomTarget, 0.05)
-			offsetX = p.lerp(offsetX, offsetXTarget, 0.05)
-			offsetY = p.lerp(offsetY, offsetYTarget, 0.05)
+			zoom = p.lerp(zoom, zoomTarget, 0.04)
+			offsetX = p.lerp(offsetX, offsetXTarget, 0.04)
+			offsetY = p.lerp(offsetY, offsetYTarget, 0.04)
 		}
 
 		// Function to check if mouse is over the p5.js canvas
@@ -218,6 +235,7 @@
 
 		p.touchMoved = () => {
 		    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
+
 		    if (p.touches.length === 1) {
 		        // Pan with single finger swipe
 		        offsetX = p.touches[0].x - startX;
@@ -232,14 +250,16 @@
 		            let previousZoom = zoom;
 		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
 
-		            // Adjust the offset to keep zoom centered between the two touch points
+		            // Calculate midpoint between the two touch points
 		            let midX = (p.touches[0].x + p.touches[1].x) / 2;
 		            let midY = (p.touches[0].y + p.touches[1].y) / 2;
-		            offsetX = midX - (midX - offsetX) * zoomChange;
-		            offsetY = midY - (midY - offsetY) * zoomChange;
+
+		            // Adjust offsets to maintain zoom centered on the pinch
+		            offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
+		            offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
 		        }
 
-		        // Update previous distance
+		        // Update previous distance for the next move event
 		        previousDistance = currentDistance;
 		    }
 
@@ -259,9 +279,14 @@
 
 		function resize() {
 			w = p.windowWidth;
-			h = p.windowHeight - 6;
-			if (p.windowWidth < 800) {
-				h = p.windowHeight * 0.8;
+			// h = p.windowHeight - 6;
+			h = p.windowHeight - marginBottom;
+			dotSize = 4;
+			if (p.windowWidth < 1500) {
+				dotSize = 3;
+			}
+			if (p.windowWidth < 600) {
+				dotSize = 2;
 			}
 			p.resizeCanvas(w, h);
 
@@ -287,8 +312,6 @@
 				this.velocity = p.createVector(0, 0);
 				this.acceleration = p.createVector(0, 0);
 				this.target = this.center.copy();
-				this.maxSpeed = 3;
-				this.maxForce = 0.5;
 				this.peoplePositions = this.calculatePeoplePositions(obj.dots);
 				this.hovered = false;
 				this.score = 0;
@@ -491,6 +514,7 @@
 		        }
 
 		        if (searchValue == this.obj.OCCUPATION) {
+		        	job_hl_index = this.index;
 		        	p.stroke("#ffffff");
 		        	p.strokeWeight(1 / zoom);
 		        }
@@ -522,7 +546,7 @@
 
 			checkTextOverlap(otherCircles) {
 			    // Approximate text height and width based on zoom and font size
-			    let scaledFontSize = h / 12 / zoom;
+			    let scaledFontSize = h / 12 / zoom * 2;
 			    if (guidedTour && zoomedGuidedTour) {
 			        scaledFontSize = h / 10 / zoom;
 			    }
@@ -575,6 +599,12 @@
 			    	shouldDisplayText = false;
 			    } else if (searchValue != "" && searchValue == this.obj.OCCUPATION) {
 			    	shouldDisplayText = true;
+			    }
+
+			    const textWidth = p.textWidth(this.obj.OCC_SHORT);
+
+			    if ( (this.center.x - textWidth/2 < 0 || this.center.x + textWidth/2 > w) && Math.abs(zoom - 1) < 0.1 ) {
+			    	shouldDisplayText = false;
 			    }
 
 			    // Gradually fade in or out the text

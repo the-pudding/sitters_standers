@@ -32,12 +32,12 @@
 	.wordmark a:hover {
 		background-color: transparent;
 	}
-	@media (width <= 800px) {
+/*	@media (width <= 1000px) {*/
 		.wordmark {
 			max-width: 10em;
 			margin: 0 0 0 20px;
 			padding: 32px 0;
 			transform: rotate(-4deg);
 		}
-	}
+/*	}*/
 </style>

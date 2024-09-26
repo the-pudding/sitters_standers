@@ -160,12 +160,12 @@
 		height: 100vh;
 		background: var(--color-bg);
 	}
-	@media (width <= 800px) {
+/*	@media (width <= 1000px) {*/
 		.container {
-			height: 80vh;
-			bottom: 20vh;
+			height: calc(100% - 150px);
+			bottom: 150px;
 		}
-	}
+/*	}*/
 	.canvasContainer {
 		cursor: move; /* fallback if grab cursor is unsupported */
 		cursor: grab;

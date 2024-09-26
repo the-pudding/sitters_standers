@@ -108,7 +108,7 @@
 
 <div class="question">
 	<div class="progressBar" style="width: {currentStageNumber/(copy.story.length - 1)*100}%"></div>
-	<div class="kicker">{copy.story[currentStageNumber].cat}</div>
+	<!-- <div class="kicker">{copy.story[currentStageNumber].cat}</div> -->
 	<div class="text">
 		{@html convertToHTML(copy.story[currentStageNumber].text)}
 	</div>
@@ -122,6 +122,7 @@
 		<Pulldown opts={copy.questions} {currentVar} on:change={handlePulldownChange} />
 		{/if}
 	</div>
+	{#if currentStageNumber != 0}
 	<button class="skipToExplore" on:click={skip}>
 		{#if currentStageNumber < copy.story.length - 1}
 		Skip to explore
@@ -129,23 +130,9 @@
 		Reset to start
 		{/if}
 	</button>
+	{/if}
 </div>
 
 <style>
-.skipToExplore {
-	background: none;
-	color: white;
-	text-align: left;
-	padding: 0;
-	margin-top: 10px;
-	font-size: 13px;
-	color: var(--color-light-purple);
-	position: absolute;
-	bottom: 15px;
-	left: 10px;
-}
-.skipToExplore:hover {
-	color: var(--color-off-purple);
-	text-decoration: underline;
-}
+
 </style>
