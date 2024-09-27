@@ -8,7 +8,7 @@
 	export let introActive;
 	export let searchValue;
 
-	let shown = false;
+	let shown = true;
 	let jobSearchShown = false;
 	let flyValue = 200;
 	let query;
@@ -189,13 +189,13 @@
 
 
 {#if !introActive}
-<!-- <button class="toolbutton hideShow" class:selected={shown} on:click={toggleShown}>
+<button class="toolbutton hideShow" class:selected={shown} on:click={toggleShown}>
 	{#if shown}
 	x Requirements
 	{:else}
 	✎ Requirements
 	{/if}
-</button> -->
+</button>
 <button class="toolbutton jobSearch" class:selected={jobSearchShown} on:click={toggleJobSearch}>
 	{#if !jobSearchShown && searchValue != ""}
 	x Search jobs
@@ -256,7 +256,6 @@
 	}
 	.panel.jobSearch {
 		max-height: 500px;
-		z-index: 9999;
 	}
 	.jobSearch input {
 		width: 100%;
@@ -330,19 +329,18 @@
 		top: 20px;
 	}
 	.toolbutton.jobSearch {
-/*		right: 159px;*/
-		right: 20px;
+		right: 159px;
 		top: 20px;
 	}
 	.toolbutton:hover {
 		color: white;
 		z-index: 99;
 	}
-	/*@media (width <= 800px) {
+	@media (width <= 800px) {
 		.toolbutton {
 			display: none;
 		}
-	}*/
+	}
 
 	.dotContainer {
 		width: 100%;

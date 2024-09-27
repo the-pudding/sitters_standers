@@ -24,14 +24,10 @@
 	let maxIndicies = []
 
 	let currentData = Array(copy.questions.length).fill(1);
-	let currentVar = undefined;
-	let prevVar = undefined;
+	let currentVar = "";
 	let currentQuestionOrder = copy.questions.map(question => question.variable);
-	let axis_variable = "";
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
-	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": 90000};
-	data.push(you);
 
 	function handleUpdateQuestion(event, num) {
 		currentStageNumber = currentStageNumber + event.detail.answer; // answer is 1 for forward, -1 for backward 
@@ -47,80 +43,59 @@
 		.filter(question => question.variable.startsWith("Percent"))
 		.map(question => [
 			question.variable,
-			selectedIndices.includes(Number(question.index)) ? 1 : 0,
+			selectedIndices.includes(Number(question.index)) ? 1 : -1,
 			question.cat
 			]);
-
-		// Update You
-		for (let i = 0; i < selectedVariables.length; i++) {
-			const varname = selectedVariables[i][0];
-			const qanswer = selectedVariables[i][1];
-			const varcat = selectedVariables[i][2];
-			data[data.length-1][varname] = qanswer*100;
-		}
 
 	    // Step 1: Collect all the scores
 		let scoresWithIndices = [];
 
 		for (let i = 0; i < data.length; i++) {
 			data[i]["score"] = 0;
-			data[i]["similarity_score"] = 0;
-			
-			// for similarity score
+
+	        // Step 2: Calculate the score for each data point
 			for (let j = 0; j < selectedVariables.length; j++) {
 				const varname = selectedVariables[j][0];
 				const qanswer = selectedVariables[j][1];
 				const varcat = selectedVariables[j][2];
-				let sim_value = 0;
-				if (varname in data[i]) {
-					sim_value = Number(data[i][varname].toString().replace(/[^0-9.]/g, ''));
-				}
+				const value = Number(data[i][varname].toString().replace(/[^0-9.]/g, ''));
 				if (varcat != "noquestion") {
-					if (qanswer == 0) {
-						data[i]["similarity_score"] -= sim_value;
+					if (qanswer == -1) {
+						data[i].score -= value;
 					} else {
-						data[i]["similarity_score"] += sim_value;
+						data[i].score += value;
 					}
 				}
 			}
-			if (copy.story[currentStageNumber].hl == "" || copy.story[currentStageNumber].hl == undefined) {
-				data[i].score = data[i]["similarity_score"];
-			} else {
-				// for variable score
-				let value = 0;
-				if (currentVar in data[i]) {
-					value = Number(data[i][currentVar].toString().replace(/[^0-9.]/g, ''));
-				}
-				data[i].score += value;
-			}
+
 	        // Add the score along with its index to scoresWithIndices array
 			scoresWithIndices.push({ index: i, score: data[i].score, dots: data[i].dots });
 		}
 
 	    // Step 3: Sort the scoresWithIndices array by score in ascending order
 		scoresWithIndices.sort((a, b) => a.score - b.score);
+
 		const numberOfIntroJobs = 10;
 	    // Step 4: Get the bottom 10 scores (first 10 in the sorted array)
 		minIndicies = scoresWithIndices.slice(0, numberOfIntroJobs).map(item => item.index);
 
 	    // Step 5: Get the top 10 scores (last 10 in the sorted array)
 		maxIndicies = scoresWithIndices.slice(-numberOfIntroJobs).map(item => item.index);
-		maxIndicies.push(data.length-1)
-		const smoothingAmount = 5;
 
-	    // Step 7: Calculate the average of the lowest smoothingAmount scores
+		const smoothingAmount = 20;
+
+	    // Step 7: Calculate the average of the lowest 10 scores (optional, as per your original code)
 		let sortedScores = scoresWithIndices.map(item => item.score);
-
 		let minAvg = sortedScores.slice(0, smoothingAmount).reduce((sum, score) => sum + score, 0) / smoothingAmount;
 
-	    // Step 8: Calculate the average of the highest smoothingAmount scores
+	    // Step 8: Calculate the average of the highest 10 scores (optional, as per your original code)
 		let maxAvg = sortedScores.slice(-smoothingAmount).reduce((sum, score) => sum + score, 0) / smoothingAmount;
 
-	    // Step 9: Set minmax to these average values
+	    // Step 9: Set minmax to these average values (optional, as per your original code)
 		minmax[0] = minAvg;
 		minmax[1] = maxAvg;
 
-	    // Step 10: Move the first item with at least 6 dots to the front of maxIndicies
+	    // Step 10: Move the first item with at least 4 dots to the front of maxIndicies
 		let found = false;
 
 	    // Check maxIndicies for an item with at least 4 dots
@@ -139,7 +114,7 @@
 	    // If no item in maxIndicies has at least 4 dots, find one in the entire sorted array
 		if (!found) {
 			for (let i = scoresWithIndices.length - 1; i >= 0; i--) {
-				if (scoresWithIndices[i].dots >= 6) {
+				if (scoresWithIndices[i].dots >= 4) {
 					const index = scoresWithIndices[i].index;
 	                // Insert it at the front of maxIndicies
 					maxIndicies.unshift(index);
@@ -151,17 +126,16 @@
 				}
 			}
 		}
+
+	    // console.log(data);
 	}
 
 	$: {
-		if (currentIntroActive != introActive || selectedIndices != prevSelectedIndices || currentVar != prevVar) {
+		if (currentIntroActive != introActive || selectedIndices != prevSelectedIndices) {
 			updateData();
 			currentIntroActive = introActive;
 			prevSelectedIndices = selectedIndices; 
-			prevVar = currentVar;
 		}
-		let foundObject = copy.questions.find(obj => obj.variable === copy.story[currentStageNumber].hl);
-		axis_variable = foundObject ? foundObject.axis_variable : "like your job"; // Safely access axis_variable
 		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies, searchValue;
 	}
 </script>
@@ -171,7 +145,7 @@
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
 		<Canvas {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies}/>
-		<Axis {currentStageNumber} {axis_variable} />
+		<Axis {currentStageNumber} />
 		<Text bind:searchValue {currentStageNumber} {copy} {data} {currentVar} on:updateCurrentVar={handleCurrentVarUpdate} on:updateQuestion={handleUpdateQuestion}  />
 	</div>
 	{/if}
@@ -187,20 +161,20 @@
 		background: var(--color-bg);
 	}
 /*	@media (width <= 1000px) {*/
-	.container {
-		height: calc(100% - 150px);
-		bottom: 150px;
-	}
+		.container {
+			height: calc(100% - 150px);
+			bottom: 150px;
+		}
 /*	}*/
-.canvasContainer {
-	cursor: move; /* fallback if grab cursor is unsupported */
-	cursor: grab;
-	cursor: -moz-grab;
-	cursor: -webkit-grab;
-}
-.canvasContainer:active {
-	cursor: grabbing;
-	cursor: -moz-grabbing;
-	cursor: -webkit-grabbing;
-}
+	.canvasContainer {
+		cursor: move; /* fallback if grab cursor is unsupported */
+		cursor: grab;
+		cursor: -moz-grab;
+		cursor: -webkit-grab;
+	}
+	.canvasContainer:active {
+		cursor: grabbing;
+		cursor: -moz-grabbing;
+		cursor: -webkit-grabbing;
+	}
 </style>

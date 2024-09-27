@@ -219,6 +219,9 @@ button {
 .text span {
 	color: var(--color-bright-purple);
 }
+.text span.you {
+	color: rgb(252, 186, 3);
+}
 .text p a {
 	color: white;
 	text-decoration: underline;

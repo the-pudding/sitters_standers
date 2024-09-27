@@ -1,20 +1,24 @@
 <script>
-	export let currentStageNumber;
+	export let currentStageNumber, axis_variable;
 	import { fade } from 'svelte/transition';
 </script>
 
 {#if currentStageNumber > 0}
 <div class="yaxis" transition:fade>
-	<div class="top">↑ Higher pay</div>
-	<div class="bottom">↓ Lower pay</div>
+<!-- 	<div class="top desktop">↑ Higher pay</div>
+	<div class="bottom desktop">↓ Lower pay</div> -->
+	<div class="top mobile">↑ More {axis_variable}</div>
+	<div class="bottom mobile">↓ Less {axis_variable}</div>
 </div>
 {/if}
 
 
 <div class="xaxis">
 	{#if currentStageNumber > 1}
-	<div class="left" transition:fade>← Less like your job</div>
-	<div class="right" transition:fade>More like your job →</div>
+<!-- 	<div class="left desktop" transition:fade>← Less like your job</div>
+	<div class="right desktop" transition:fade>More like your job →</div> -->
+	<div class="left mobile" transition:fade>← Lower pay</div>
+	<div class="right mobile" transition:fade>Higher pay →</div>
 	{/if}
 </div>
 
@@ -27,31 +31,30 @@
 		pointer-events: none;
 		color: var(--color-light-purple);
 		text-shadow: 
-	    1px 1px 0px var(--color-bg), /* Bottom-right shadow */
-	    -1px -1px 0px var(--color-bg), /* Top-left shadow */
-	    -1px 1px 0px var(--color-bg), /* Bottom-left shadow */
-	    1px -1px 0px var(--color-bg), /* Top-right shadow */
-	    2px 2px 0px var(--color-bg), /* Extra width for outline */
-	    -2px -2px 0px var(--color-bg),
-	    -2px 2px 0px var(--color-bg),
-	    2px -2px 0px var(--color-bg);
-	    z-index:9999;
-		}
+		1px 1px 0px var(--color-bg), /* Bottom-right shadow */
+		-1px -1px 0px var(--color-bg), /* Top-left shadow */
+		-1px 1px 0px var(--color-bg), /* Bottom-left shadow */
+		1px -1px 0px var(--color-bg), /* Top-right shadow */
+		2px 2px 0px var(--color-bg), /* Extra width for outline */
+		-2px -2px 0px var(--color-bg),
+		-2px 2px 0px var(--color-bg),
+		2px -2px 0px var(--color-bg);
+		z-index:9999;
+	}
 
 	.yaxis {
 		position: absolute;
 		right: 0px;
 		top: 0px;
-		width: 120px;
+		width: 200px;
 		pointer-events: none;
 		height: 100%;
-/*		border-left: 1px solid var(--color-light-purple);*/
 		z-index: 100;
 		text-align: right;
 	}
 	.yaxis .top {
 		position: absolute;
-		top: 10px;
+		top: 60px;
 		right: 5px;
 	}
 	.yaxis .bottom {
@@ -82,18 +85,31 @@
 		width: 170px;
 		text-align: right;
 	}
-/*	@media (width <= 1000px) {*/
-		.yaxis div {
-			width: 100%;
-		}
-		.yaxis .bottom {
-			bottom: 35px;
-		}
-		.yaxis .top {
+
+	.yaxis div {
+		width: 100%;
+	}
+	.yaxis .bottom {
+		bottom: 35px;
+	}
+	.yaxis .top {
 /*			top: 100px;*/
-		}
-		.xaxis .left, .xaxis .right {
-			bottom: -20px;
-		}
-/*	}*/
+}
+.xaxis .left, .xaxis .right {
+	bottom: -20px;
+}
+/*.mobile {
+	display: none;
+}
+.desktop {
+	display: block;
+}*/
+/*@media (width <= 800px) {*/
+	.mobile {
+		display: block;
+	}
+	.desktop {
+		display: none;
+	}
+/*}*/
 </style>
