@@ -13,6 +13,8 @@
 	let prevSelectedIndices = [];
 	let searchValue = "";
 
+	/// CUSTOMIZED USER CHECKPOINT
+
 	/*------ set to true when not testing
 	-----------------------------------------------*/
 	let introActive = true;
