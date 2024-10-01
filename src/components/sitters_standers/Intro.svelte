@@ -7,6 +7,7 @@
 	export let selectedIndices;
 	export let introActive;
 	export let searchValue;
+	export let selectedSalary;
 
 	let shown = false;
 	let jobSearchShown = false;
@@ -15,9 +16,11 @@
 	let prev_query;
 	let formatted = [];
 	let options = { keys: ["OCCUPATION"] };
+	let selectedSalaryIndex = null;
+	
 
-	const questionOrder = ["intro","stand_sit","body","other","environment"];
-	const buttonOrder = ["Start <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Let's go <span>→</span>"]
+	const questionOrder = ["intro","stand_sit","body","other","environment","salary"];
+	const buttonOrder = ["Start <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Let's go <span>→</span>"]
 	let questionNumber = 0;
 	function toggleAnswer(index) {
 		if (selectedIndices.includes(index)) {
@@ -43,6 +46,30 @@
 			query = "";
 		}
 	}
+
+	function getMidpoint(salary) {
+        // Handle the "$150,000+" case separately
+        if (salary === "$150,000+") {
+            return 150000; // Or any higher value you want to represent
+        }
+        
+        // Split the range into numbers
+        const [low, high] = salary
+            .replace(/\$|,/g, '') // Remove "$" and commas
+            .split(' to ')        // Split by " to "
+            .map(Number);         // Convert to numbers
+
+        // Calculate the midpoint
+        return (low + high) / 2;
+    }
+	function addSalary(salary, index) {
+        if (selectedSalaryIndex === index) {
+            selectedSalaryIndex = null; // Deselect if the same button is clicked again
+        } else {
+            selectedSalaryIndex = index; // Set the new selected index
+        }
+        selectedSalary = getMidpoint(salary);
+    }
 
 	function buttonBack() {
 		if (questionNumber > 0) {
@@ -93,7 +120,7 @@
 		}
 	});
 	$: {
-		selectedIndices, introActive, searchValue, formatted;
+		selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
 	}
 </script>
 
@@ -119,6 +146,12 @@
 				{#if questionOrder[questionNumber] == "intro"}
 				<h2>{copy.dek}</h2>
 				<h3>by <a href="https://pudding.cool/author/alvin-chang/">{copy.byline}</a></h3>
+				{:else if questionOrder[questionNumber] == "salary"}
+					{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+"] as salary, index}
+					    <button class="answerItem {selectedSalaryIndex === index ? 'selected' : ''}" on:click={() => addSalary(salary, index)}>
+					        {@html salary}
+					    </button>
+					{/each}
 				{:else}
 				{#each copy.questions as option}
 				{#if option.cat == questionOrder[questionNumber]}

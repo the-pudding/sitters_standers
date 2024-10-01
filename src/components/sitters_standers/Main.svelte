@@ -12,6 +12,8 @@
 	let selectedIndices = [];
 	let prevSelectedIndices = [];
 	let searchValue = "";
+	let selectedSalary = 50000;
+	let explored = false;
 
 	/*------ set to true when not testing
 	-----------------------------------------------*/
@@ -30,7 +32,7 @@
 	let axis_variable = "";
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
-	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": 90000};
+	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary};
 	data.push(you);
 
 	function handleUpdateQuestion(event, num) {
@@ -58,6 +60,7 @@
 			const varcat = selectedVariables[i][2];
 			data[data.length-1][varname] = qanswer*100;
 		}
+		data[data.length-1]["A_MEAN"] = selectedSalary;
 
 	    // Step 1: Collect all the scores
 		let scoresWithIndices = [];
@@ -89,7 +92,11 @@
 				// for variable score
 				let value = 0;
 				if (currentVar in data[i]) {
-					value = Number(data[i][currentVar].toString().replace(/[^0-9.]/g, ''));
+					if (data[i][currentVar] == "") {
+						value = -1;
+					} else {
+						value = Number(data[i][currentVar].toString().replace(/[^0-9.]/g, ''));
+					}
 				}
 				data[i].score += value;
 			}
@@ -162,15 +169,22 @@
 		}
 		let foundObject = copy.questions.find(obj => obj.variable === copy.story[currentStageNumber].hl);
 		axis_variable = foundObject ? foundObject.axis_variable : "like your job"; // Safely access axis_variable
-		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies, searchValue;
+		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies, searchValue, selectedSalary;
+		updateData();
 	}
 </script>
 
 <div class="container">
-	<Intro {copy} {data} bind:searchValue bind:selectedIndices bind:introActive/>
+	<Intro {copy} {data} bind:selectedSalary bind:searchValue bind:selectedIndices bind:introActive/>
+	{#if copy.story[currentStageNumber].cat == "ExploreInstruction" && !explored}
+	<div class="exploreInstruction" transition:fade>
+		<img src="assets/app/hand.png"/>
+		<div class="exploreWord">Explore</div>
+	</div>
+	{/if}
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
-		<Canvas {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies}/>
+		<Canvas {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:explored/>
 		<Axis {currentStageNumber} {axis_variable} />
 		<Text bind:searchValue {currentStageNumber} {copy} {data} {currentVar} on:updateCurrentVar={handleCurrentVarUpdate} on:updateQuestion={handleUpdateQuestion}  />
 	</div>
@@ -202,5 +216,55 @@
 	cursor: grabbing;
 	cursor: -moz-grabbing;
 	cursor: -webkit-grabbing;
+}
+
+.exploreInstruction {
+	background: rgba(0,0,0,.8);
+	border-radius:10px;
+	color: black;
+	position: fixed;
+	padding: 20px;
+	left: 50%;
+	top: 50%;
+	width: 100px;
+	height: 100px;
+	transform: translate(-50%, -50%);
+}
+.exploreInstruction img {
+	position: absolute;
+	left: 50%;
+	top: 40%;
+	width: 50px;
+	height: 50px;
+	animation: moveRotate 4s infinite ease-in-out;
+	opacity: 1;
+}
+.exploreWord {
+	color: white;
+	width: 100%;
+	position: absolute;
+	bottom:10px;
+	left: 0px;
+	text-align: center;
+	font-weight: bold;
+	font-family: var(--serif);
+	font-size: 16px;
+}
+@keyframes moveRotate {
+	0% {
+		transform: translate(-50%, -50%) rotate(0deg) scale(1);
+	}
+	25% {
+		transform: translate(-70%, -50%) rotate(0deg); /* Move further left */
+	}
+	50% {
+		transform: translate(-40%, -50%) rotate(0deg); /* Move further right */
+	}
+	75% {
+		transform: translate(-50%, -50%) rotate(20deg) scale(0.8); /* Rotate more */
+	}
+	100% {
+		transform: translate(-50%, -50%) rotate(0deg) scale(1); /* Back to center and no rotation */
+	}
 }
 </style>

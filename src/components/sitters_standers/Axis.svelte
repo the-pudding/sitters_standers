@@ -25,7 +25,7 @@
 
 <style>
 	.yaxis, .xaxis {
-		font-family: var(--sans);
+		font-family: var(--serif);
 		user-select: none;
 		font-size: 13px;
 		pointer-events: none;
