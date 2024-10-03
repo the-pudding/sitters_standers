@@ -114,12 +114,12 @@ body {
 	position: absolute;
 	top: 0;
 	left: 0;
-	font-family: var(--serif);
+	font-family: var(--sans);
 	color: var(--color-off-purple);
 	font-size: 15px;
 }
 button {
-	font-family: var(--serif);
+	font-family: var(--sans);
 }
 /*Question box*/
 .question {
@@ -142,7 +142,7 @@ button {
 	transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000); /* ease (default) */
 	top: auto;
 	bottom: 0px;
-	left: -10px;
+	left: 0px;
 }
 .text, .answers {
 	position: absolute;	
@@ -212,7 +212,6 @@ button {
 
 .text {
 	margin-top: 10px;
-	font-family: var(--serif);
 	font-size: 16px;
 	line-height: 20px;
 }
@@ -276,6 +275,11 @@ button {
 	.text, .answers {
 		width: 100%;
 		padding: 0 5px;
+	}
+	.text {
+		margin-top: 16px;
+		font-size: 14px;
+		line-height: 18px;
 	}
 }
 

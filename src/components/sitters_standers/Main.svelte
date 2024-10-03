@@ -112,7 +112,7 @@
 
 	    // Step 5: Get the top 10 scores (last 10 in the sorted array)
 		maxIndicies = scoresWithIndices.slice(-numberOfIntroJobs).map(item => item.index);
-		maxIndicies.push(data.length-1)
+		// maxIndicies.push(data.length-1)
 		const smoothingAmount = 5;
 
 	    // Step 7: Calculate the average of the lowest smoothingAmount scores
