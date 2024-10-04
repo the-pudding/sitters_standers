@@ -100,9 +100,7 @@
 		currentVar;
 		if (copy.story[currentStageNumber].job != undefined) {
 			searchValue = copy.story[currentStageNumber].job;
-		} else {
-			searchValue = "";
-		}
+		} 
 	}
 </script>
 

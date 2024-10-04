@@ -8,6 +8,7 @@
 	export let introActive;
 	export let searchValue;
 	export let selectedSalary;
+	let searchIndex = -999;
 
 	let shown = false;
 	let jobSearchShown = false;
@@ -17,6 +18,7 @@
 	let formatted = [];
 	let options = { keys: ["OCCUPATION"] };
 	let selectedSalaryIndex = null;
+	let nodatashown = false;
 	
 
 	const questionOrder = ["intro","stand_sit","body","other","environment","salary"];
@@ -79,7 +81,10 @@
 	}
 
 	function searchJob(j) {
+		nodatashown = false;
 		searchValue = j.map(obj => obj.text).join('');
+		searchIndex = data.findIndex(obj => obj.OCCUPATION === searchValue);
+		nodatashown = data[searchIndex].score == -1 ? true : false;
 		query = searchValue;
 	}
 
@@ -121,6 +126,10 @@
 	});
 	$: {
 		selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
+		if (searchValue == "") {
+			nodatashown = false;
+		}
+		console.log(jobSearchShown)
 	}
 </script>
 
@@ -202,6 +211,19 @@
 </div>
 {/if}
 
+
+{#if !introActive}
+<button class="toolbutton jobSearch" class:selected={jobSearchShown} on:click={toggleJobSearch}>
+	{#if !jobSearchShown && searchValue != ""}
+	x Close search
+	{:else if jobSearchShown || searchValue != ""}
+	x Clear search
+	{:else}
+	Search jobs
+	{/if}
+</button>
+{/if}
+
 {#if jobSearchShown}
 <div class="panel jobSearch">
 	<input bind:value={query}  on:focus={inputFocus} placeholder="Search job titles..."/>
@@ -217,28 +239,17 @@
 	{/each}
 	{/each}
 	{/if}
+	{#if nodatashown}
+	<div class="nodata">
+		&#9888; This job doesn't have data for this variable. Choose another job or variable.
+	</div>
+	{/if}
 </div>
+	
 {/if}
 
 
-{#if !introActive}
-<!-- <button class="toolbutton hideShow" class:selected={shown} on:click={toggleShown}>
-	{#if shown}
-	x Requirements
-	{:else}
-	✎ Requirements
-	{/if}
-</button> -->
-<button class="toolbutton jobSearch" class:selected={jobSearchShown} on:click={toggleJobSearch}>
-	{#if !jobSearchShown && searchValue != ""}
-	x Search jobs
-	{:else if jobSearchShown || searchValue != ""}
-	x Clear search
-	{:else}
-	🔍 Search jobs
-	{/if}
-</button>
-{/if}
+
 
 <style>
 	
@@ -395,5 +406,12 @@
 	.dot.selected {
 		background: var(--color-bright-purple);
 		opacity: 1;
+	}
+	.nodata {
+		position: absolute;
+		right: 10px;
+		top: calc(100% + 10px);
+		font-size: 14px;
+		color: rgb(252, 186, 3);
 	}
 </style>

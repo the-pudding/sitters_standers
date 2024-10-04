@@ -109,6 +109,7 @@ header {
 body {
 	overflow: hidden;
 	background: var(--color-bg);
+	touch-action: manipulation;
 }
 #content {
 	position: absolute;

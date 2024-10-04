@@ -25,7 +25,7 @@
 	let startTouches = []; // To store touch points for pinch zoom
 	let previousDistance = null; // To store the previous distance between two touches
 	let atlasGrotesk;
-	let marginTop = 130;
+	let marginTop = 80;
 	const marginBottom = 200;
 	let divider = 1; // divides number of dots for smaller screens
 	let moneyMinMax = [999999,-999999];
@@ -196,13 +196,22 @@
 			return element === p.canvas;
 		}
 
+		// Function to constrain offset values within the visible canvas bounds
+		function constrainOffsets() {
+		    const maxOffsetX = (w * zoom) / 1.5;
+		    const maxOffsetY = (h * zoom) / 1.5;
+
+		    // Clamp offsetX and offsetY to prevent moving outside the canvas
+		    offsetX = p.constrain(offsetX, -maxOffsetX, maxOffsetX);
+		    offsetY = p.constrain(offsetY, -maxOffsetY, maxOffsetY);
+		}
+
 		// Handle zooming with mouse wheel
 		p.mouseWheel = (event) => {
-			
 		    if (!isMouseOverCanvas()) return; // Prevent zooming if not over the canvas
 		    userControl = true;
 		    explored = true;
-		    // Adjust zoom speed based on the velocity of the scroll (event.delta)
+		    
 		    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
 		    let baseZoomSpeed = 0.05 * zoom; // Base zoom speed proportional to current zoom
 		    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
@@ -221,6 +230,9 @@
 		    // Focus zoom on mouse position
 		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
 		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
+
+		    // Constrain offsets so you can't pan outside the canvas
+		    constrainOffsets();
 		};
 
 		// Handle panning with mouse drag
@@ -230,69 +242,90 @@
 		    startY = p.mouseY - offsetY;
 		};
 
+		// Handle panning with mouse drag
 		p.mouseDragged = () => {
 		    if (!isMouseOverCanvas()) return; // Prevent dragging if not over the canvas
 		    userControl = true;
 		    explored = true;
+		    
 		    offsetX = p.mouseX - startX;
 		    offsetY = p.mouseY - startY;
+
+		    // Constrain offsets so you can't pan outside the canvas
+		    constrainOffsets();
 		};
 
-		// Handle pinch zoom and pan for touchscreens
+		let pinchZooming = false;
+		let wasPinching = false;
+
 		p.touchStarted = () => {
-			userControl = true;
-			explored = true;
+		    userControl = true;
+		    explored = true;
 		    if (!isMouseOverCanvas()) return; // Prevent touch actions if not over the canvas
-		    if (p.touches.length === 1) {
-		        // Single touch for panning
-		    	startX = p.touches[0].x - offsetX;
-		    	startY = p.touches[0].y - offsetY;
+		    if (p.touches.length === 1 && !pinchZooming) {
+		        // Single touch for panning, allowed if not in pinch zoom mode
+		        startX = p.touches[0].x - offsetX;
+		        startY = p.touches[0].y - offsetY;
 		    } else if (p.touches.length === 2) {
 		        // Store the initial positions of two touches for pinch zoom
-		    	previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		        pinchZooming = true;
+		        wasPinching = true;
+		        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 		    }
 		};
 
+		// Handle touch-based pinch zoom and pan
 		p.touchMoved = () => {
-			
 		    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
 		    userControl = true;
 		    explored = true;
+		    
 		    if (p.touches.length === 1) {
+		        if (pinchZooming) {
+		            startX = p.touches[0].x - offsetX;
+		            startY = p.touches[0].y - offsetY;
+		            pinchZooming = false; // Exit pinch zoom mode
+		        }
 		        // Pan with single finger swipe
-		    	offsetX = p.touches[0].x - startX;
-		    	offsetY = p.touches[0].y - startY;
+		        offsetX = p.touches[0].x - startX;
+		        offsetY = p.touches[0].y - startY;
 		    } else if (p.touches.length === 2) {
-		        // Pinch to zoom with two fingers
-		    	let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-		        // Calculate the zoom change based on the distance between two touches
-		    	if (previousDistance) {
-		    		let zoomChange = currentDistance / previousDistance;
-		    		let previousZoom = zoom;
-		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]); // Constrain the zoom level
+		        if (previousDistance) {
+		            let zoomChange = currentDistance / previousDistance;
+		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]);
 
-		            // Calculate midpoint between the two touch points
 		            let midX = (p.touches[0].x + p.touches[1].x) / 2;
 		            let midY = (p.touches[0].y + p.touches[1].y) / 2;
 
-		            // Adjust offsets to maintain zoom centered on the pinch
 		            offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
 		            offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
 		        }
 
-		        // Update previous distance for the next move event
 		        previousDistance = currentDistance;
+		        pinchZooming = true;
 		    }
+
+		    // Constrain offsets so you can't pan outside the canvas
+		    constrainOffsets();
 
 		    return false; // Prevent default behavior (like scrolling the page)
 		};
 
 		p.touchEnded = () => {
-			userControl = true;
-			explored = true;
+		    userControl = true;
+		    explored = true;
+
+		    if (p.touches.length === 1 && wasPinching) {
+		        // If transitioning from a pinch, avoid jumping offsets
+		        startX = p.touches[0].x - offsetX;
+		        startY = p.touches[0].y - offsetY;
+		        wasPinching = false; // Reset pinch flag
+		    }
+
 		    // Reset after touch ends
-			previousDistance = null;
+		    previousDistance = null;
 		};
 
 		let resizeTimeout;
@@ -734,7 +767,12 @@
 			        let yPos = this.center.y - this.radius / 2 - (3 / zoom); // Place the text 3 pixels above the circle, scaled by zoom
 			        p.stroke("#150317");
 			        p.strokeWeight(2/zoom);
-			        p.text(this.obj.OCC_SHORT, xPos, yPos);
+			        if (searchValue == "") {
+			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
+			        } else if (searchValue == this.obj.OCCUPATION && data[this.index].score != -1) {
+			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
+			        }
+			       
 
 			        this.textDisplayed = true; // Mark text as displayed
 			    } else {

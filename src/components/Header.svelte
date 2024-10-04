@@ -1,14 +1,18 @@
 <script>
 	// shadow, plain, line, bubble
 	import wordmark from "$svg/wordmark-shadow.svg";
+	import { fade } from 'svelte/transition';
+	export let currentStageNumber;
 </script>
 
 <header>
-	<div class="wordmark">
+	{#if currentStageNumber == 0}
+	<div class="wordmark" transition:fade>
 		<a href="https://pudding.cool" aria-label="The Pudding" target="_self"
 			>{@html wordmark}</a
 		>
 	</div>
+	{/if}
 </header>
 
 <style>
@@ -16,9 +20,9 @@
 		pointer-events: none;
 	}
 	.wordmark {
-		max-width: 10em;
+		max-width: 15em;
 		margin: 0 auto;
-		padding: 15px 0;
+		padding: 15px;
 		transform: rotate(-4deg);
 	}
 
@@ -35,8 +39,8 @@
 	@media (width <= 1000px) {
 		.wordmark {
 			max-width: 10em;
-			margin: 0 0 0 20px;
-			padding: 32px 0;
+			margin: 0 0 0 10px;
+			padding: 20px 0px 0 0;
 			transform: rotate(-4deg);
 		}
 	}

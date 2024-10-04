@@ -8,7 +8,7 @@
 	export let copy;
 	export let data;
 	export let currentQuestionNum = 0;
-	let currentStageNumber = 0;
+	export let currentStageNumber;
 	let selectedIndices = [];
 	let prevSelectedIndices = [];
 	let searchValue = "";
@@ -179,7 +179,7 @@
 	{#if copy.story[currentStageNumber].cat == "ExploreInstruction" && !explored}
 	<div class="exploreInstruction" transition:fade>
 		<img src="assets/app/hand.png"/>
-		<div class="exploreWord">Explore</div>
+		<!-- <div class="exploreWord">Explore</div> -->
 	</div>
 	{/if}
 	{#if !introActive}
@@ -219,7 +219,7 @@
 }
 
 .exploreInstruction {
-	background: rgba(0,0,0,.8);
+/*	background: rgba(0,0,0,.8);*/
 	border-radius:10px;
 	color: black;
 	position: fixed;
@@ -233,10 +233,11 @@
 .exploreInstruction img {
 	position: absolute;
 	left: 50%;
-	top: 40%;
-	width: 50px;
-	height: 50px;
-	animation: moveRotate 4s infinite ease-in-out;
+	top: 50%;
+	width: 100px;
+	height: 100px;
+	transform: translate(-50%, -50%);
+/*	animation: moveRotate 4s infinite ease-in-out;*/
 	opacity: 1;
 }
 .exploreWord {

@@ -43,23 +43,23 @@
 
 	.yaxis {
 		position: absolute;
-		right: 0px;
+		left: 0px;
 		top: 0px;
 		width: 200px;
 		pointer-events: none;
 		height: 100%;
 		z-index: 100;
-		text-align: right;
+		text-align: left;
 	}
 	.yaxis .top {
 		position: absolute;
-		top: 60px;
-		right: 5px;
+		top: 10px;
+		left: 5px;
 	}
 	.yaxis .bottom {
 		position: absolute;
 		bottom: 40px;
-		right: 5px;
+		left: 5px;
 	}
 
 	.xaxis {
