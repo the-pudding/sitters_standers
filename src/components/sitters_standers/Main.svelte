@@ -175,7 +175,7 @@
 </script>
 
 <div class="container">
-	<Intro {copy} {data} bind:selectedSalary bind:searchValue bind:selectedIndices bind:introActive/>
+	<Intro {copy} {data} {currentStageNumber} bind:selectedSalary bind:searchValue bind:selectedIndices bind:introActive/>
 	{#if copy.story[currentStageNumber].cat == "ExploreInstruction" && !explored}
 	<div class="exploreInstruction" transition:fade>
 		<img src="assets/app/hand.png"/>
@@ -237,7 +237,7 @@
 	width: 100px;
 	height: 100px;
 	transform: translate(-50%, -50%);
-/*	animation: moveRotate 4s infinite ease-in-out;*/
+	animation: moveRotate 4s infinite ease-in-out;
 	opacity: 1;
 }
 .exploreWord {
@@ -262,7 +262,7 @@
 		transform: translate(-40%, -50%) rotate(0deg); /* Move further right */
 	}
 	75% {
-		transform: translate(-50%, -50%) rotate(20deg) scale(0.8); /* Rotate more */
+		transform: translate(-50%, -50%) rotate(20deg); /* Rotate more */
 	}
 	100% {
 		transform: translate(-50%, -50%) rotate(0deg) scale(1); /* Back to center and no rotation */

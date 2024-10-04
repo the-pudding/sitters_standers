@@ -122,6 +122,12 @@ body {
 button {
 	font-family: var(--sans);
 }
+button:hover {
+	opacity: 0.9;
+}
+button:active {
+	opacity: 1;
+}
 /*Question box*/
 .question {
 	position: fixed;
@@ -162,6 +168,16 @@ button {
 	background: var(--color-off-purple);
 	color: var(--color-dark-purple);
 }
+.answerButton span {
+	padding: 1.5px 3px;
+	color: var(--color-light-purple);
+	border: 1px solid var(--color-light-purple);
+	border-radius: 3px;
+	font-size: 10px;
+	top: -2px;
+	font-weight: bold;
+	position: relative;
+}
 .stage_0 .back {
 	opacity: 0;
 	user-select: none;
@@ -199,10 +215,6 @@ button {
 	font-size: 14px;
 }
 
-.question span {
-	color: black;
-	font-weight: bold;
-}
 .question .kicker {
 	color: var(--color-lighter-purple);
 	font-size: 11px;
@@ -213,8 +225,8 @@ button {
 
 .text {
 	margin-top: 10px;
-	font-size: 16px;
-	line-height: 20px;
+	font-size: 15px;
+	line-height: 21px;
 }
 .text span {
 	color: var(--color-bright-purple);

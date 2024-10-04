@@ -3,7 +3,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import Fuzzy from "svelte-fuzzy";
 
-	export let copy, data;
+	export let copy, data, currentStageNumber;
 	export let selectedIndices;
 	export let introActive;
 	export let searchValue;
@@ -51,7 +51,7 @@
 
 	function getMidpoint(salary) {
         // Handle the "$150,000+" case separately
-        if (salary === "$150,000+") {
+		if (salary === "$150,000+") {
             return 150000; // Or any higher value you want to represent
         }
         
@@ -62,10 +62,10 @@
             .map(Number);         // Convert to numbers
 
         // Calculate the midpoint
-        return (low + high) / 2;
-    }
-	function addSalary(salary, index) {
-        if (selectedSalaryIndex === index) {
+            return (low + high) / 2;
+        }
+        function addSalary(salary, index) {
+        	if (selectedSalaryIndex === index) {
             selectedSalaryIndex = null; // Deselect if the same button is clicked again
         } else {
             selectedSalaryIndex = index; // Set the new selected index
@@ -73,64 +73,64 @@
         selectedSalary = getMidpoint(salary);
     }
 
-	function buttonBack() {
-		if (questionNumber > 0) {
-			questionNumber -= 1;
-			flyValue = -200;
-		}
-	}
+    function buttonBack() {
+    	if (questionNumber > 0) {
+    		questionNumber -= 1;
+    		flyValue = -200;
+    	}
+    }
 
-	function searchJob(j) {
-		nodatashown = false;
-		searchValue = j.map(obj => obj.text).join('');
-		searchIndex = data.findIndex(obj => obj.OCCUPATION === searchValue);
-		nodatashown = data[searchIndex].score == -1 ? true : false;
-		query = searchValue;
-	}
+    function searchJob(j) {
+    	nodatashown = false;
+    	searchValue = j.map(obj => obj.text).join('');
+    	searchIndex = data.findIndex(obj => obj.OCCUPATION === searchValue);
+    	nodatashown = data[searchIndex].score == -1 ? true : false;
+    	query = searchValue;
+    }
 
-	function inputFocus() {
-		query = "";
-		searchValue = "";
-	}
+    function inputFocus() {
+    	query = "";
+    	searchValue = "";
+    }
 
-	function buttonClicked() {
-		flyValue = 200;
-		if (questionNumber == questionOrder.length - 1) {
-			introActive = false;
-			shown = false;	
-		}
-		questionNumber += 1;
-	}
+    function buttonClicked() {
+    	flyValue = 200;
+    	if (questionNumber == questionOrder.length - 1) {
+    		introActive = false;
+    		shown = false;	
+    	}
+    	questionNumber += 1;
+    }
 
 	// Handle key events for navigation
-	function handleKeydown(event) {
-		if (event.key === 'ArrowRight') {
-			buttonClicked();
-		} else if (event.key === 'ArrowLeft') {
-			buttonBack();
-		}
-	}
+    function handleKeydown(event) {
+    	if (event.key === 'ArrowRight') {
+    		buttonClicked();
+    	} else if (event.key === 'ArrowLeft') {
+    		buttonBack();
+    	}
+    }
 
 	// Add and remove event listeners when component mounts and unmounts
-	onMount(() => {
-		if (typeof window !== 'undefined') {
-			window.addEventListener('keydown', handleKeydown);
-		}
-	});
+    onMount(() => {
+    	if (typeof window !== 'undefined') {
+    		window.addEventListener('keydown', handleKeydown);
+    	}
+    });
 
 	// Cleanup event listener
-	onDestroy(() => {
-		if (typeof window !== 'undefined') {
-			window.removeEventListener('keydown', handleKeydown);
-		}
-	});
-	$: {
-		selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
-		if (searchValue == "") {
-			nodatashown = false;
-		}
-		console.log(jobSearchShown)
-	}
+    onDestroy(() => {
+    	if (typeof window !== 'undefined') {
+    		window.removeEventListener('keydown', handleKeydown);
+    	}
+    });
+    $: {
+    	selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
+    	if (searchValue == "") {
+    		nodatashown = false;
+    	}
+    	console.log(jobSearchShown)
+    }
 </script>
 
 {#if introActive}
@@ -153,14 +153,17 @@
 
 			<div class="answerContainer">
 				{#if questionOrder[questionNumber] == "intro"}
-				<h2>{copy.dek}</h2>
+				<!-- <h2>{copy.dek}</h2> -->
 				<h3>by <a href="https://pudding.cool/author/alvin-chang/">{copy.byline}</a></h3>
+				<div class="introImage">
+					IMAGE TKTKTK
+				</div>
 				{:else if questionOrder[questionNumber] == "salary"}
-					{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+"] as salary, index}
-					    <button class="answerItem {selectedSalaryIndex === index ? 'selected' : ''}" on:click={() => addSalary(salary, index)}>
-					        {@html salary}
-					    </button>
-					{/each}
+				{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+"] as salary, index}
+				<button class="answerItem {selectedSalaryIndex === index ? 'selected' : ''}" on:click={() => addSalary(salary, index)}>
+					{@html salary}
+				</button>
+				{/each}
 				{:else}
 				{#each copy.questions as option}
 				{#if option.cat == questionOrder[questionNumber]}
@@ -212,7 +215,7 @@
 {/if}
 
 
-{#if !introActive}
+{#if copy.story[currentStageNumber].stage == "explore"}
 <button class="toolbutton jobSearch" class:selected={jobSearchShown} on:click={toggleJobSearch}>
 	{#if !jobSearchShown && searchValue != ""}
 	x Close search
@@ -233,7 +236,7 @@
 	{#each item as line}
 	<button class="answerItem" on:click={() => searchJob(line)}>
 		{#each line as { matches, text }}
-			{text}
+		{text}
 		{/each}
 	</button>
 	{/each}
@@ -245,7 +248,7 @@
 	</div>
 	{/if}
 </div>
-	
+
 {/if}
 
 
@@ -255,13 +258,18 @@
 	
 	h1 {
 		font-weight: bold;
-		font-size: 18px;
+		font-size: 16px;
+		width: 300px;
+		margin: 0 auto;
+		line-height: 20px;
 	}
 	h2 {
-		font-size: 15px;
+		font-size: 14px;
+		line-height: 18px;
 	}
 	h3 {
-		font-size: 15px;
+		font-size: 14px;
+		line-height: 18px;
 	}
 	h3 a {
 		color: var(--color-lighter-purple);
@@ -375,13 +383,13 @@
 	}
 	.toolbutton.jobSearch {
 /*		right: 159px;*/
-		right: 20px;
-		top: 20px;
-	}
-	.toolbutton:hover {
-		color: white;
-		z-index: 99;
-	}
+right: 20px;
+top: 20px;
+}
+.toolbutton:hover {
+	color: white;
+	z-index: 99;
+}
 	/*@media (width <= 800px) {
 		.toolbutton {
 			display: none;
@@ -413,5 +421,12 @@
 		top: calc(100% + 10px);
 		font-size: 14px;
 		color: rgb(252, 186, 3);
+	}
+	.introImage {
+		width: 320px;
+		height: 200px;
+		display: block;
+		font-size: 9px;
+		background: var(--color-lessdark-purple);
 	}
 </style>

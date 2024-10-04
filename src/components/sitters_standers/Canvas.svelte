@@ -105,6 +105,9 @@
 			if (currentVar != new_currentVar) {
 				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 				new_currentVar = currentVar;
+				if (copy.story[currentStageNumber].stage == "explore") {
+					searchValue = "";
+				}
 			}
 			p.pop();
 		};
@@ -165,7 +168,7 @@
 				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
 			}
 			if (copy.story[currentStageNumber].stage == "all_jobs_hl") {
-				centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 1.2);
+				centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 1);
 			}
 			if (copy.story[currentStageNumber].stage == "all_jobs") {
 				centerAndZoomOnCoordinate(w/2, h/2, 1);
@@ -179,7 +182,7 @@
 		    // // Calculate the offset to center the target coordinate on the canvas
 			offsetXTarget = p.width / 2 - targetX * zoomTarget;
 			offsetYTarget = p.height / 2 - targetY * zoomTarget;
-			let lerpSpeed = 0.02;
+			let lerpSpeed = 0.05;
 			if (zoomedGuidedTour || userControl) {
 				lerpSpeed = 0.1;
 			} 
@@ -198,12 +201,12 @@
 
 		// Function to constrain offset values within the visible canvas bounds
 		function constrainOffsets() {
-		    const maxOffsetX = (w * zoom) / 1.5;
-		    const maxOffsetY = (h * zoom) / 1.5;
+			const maxOffsetX = (w * zoom) / 1.5;
+			const maxOffsetY = (h * zoom) / 1.5;
 
 		    // Clamp offsetX and offsetY to prevent moving outside the canvas
-		    offsetX = p.constrain(offsetX, -maxOffsetX, maxOffsetX);
-		    offsetY = p.constrain(offsetY, -maxOffsetY, maxOffsetY);
+			offsetX = p.constrain(offsetX, -maxOffsetX, maxOffsetX);
+			offsetY = p.constrain(offsetY, -maxOffsetY, maxOffsetY);
 		}
 
 		// Handle zooming with mouse wheel
@@ -259,18 +262,18 @@
 		let wasPinching = false;
 
 		p.touchStarted = () => {
-		    userControl = true;
-		    explored = true;
+			userControl = true;
+			explored = true;
 		    if (!isMouseOverCanvas()) return; // Prevent touch actions if not over the canvas
 		    if (p.touches.length === 1 && !pinchZooming) {
 		        // Single touch for panning, allowed if not in pinch zoom mode
-		        startX = p.touches[0].x - offsetX;
-		        startY = p.touches[0].y - offsetY;
+		    	startX = p.touches[0].x - offsetX;
+		    	startY = p.touches[0].y - offsetY;
 		    } else if (p.touches.length === 2) {
 		        // Store the initial positions of two touches for pinch zoom
-		        pinchZooming = true;
-		        wasPinching = true;
-		        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		    	pinchZooming = true;
+		    	wasPinching = true;
+		    	previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 		    }
 		};
 
@@ -281,30 +284,30 @@
 		    explored = true;
 		    
 		    if (p.touches.length === 1) {
-		        if (pinchZooming) {
-		            startX = p.touches[0].x - offsetX;
-		            startY = p.touches[0].y - offsetY;
+		    	if (pinchZooming) {
+		    		startX = p.touches[0].x - offsetX;
+		    		startY = p.touches[0].y - offsetY;
 		            pinchZooming = false; // Exit pinch zoom mode
 		        }
 		        // Pan with single finger swipe
 		        offsetX = p.touches[0].x - startX;
 		        offsetY = p.touches[0].y - startY;
 		    } else if (p.touches.length === 2) {
-		        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		    	let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-		        if (previousDistance) {
-		            let zoomChange = currentDistance / previousDistance;
-		            zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]);
+		    	if (previousDistance) {
+		    		let zoomChange = currentDistance / previousDistance;
+		    		zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]);
 
-		            let midX = (p.touches[0].x + p.touches[1].x) / 2;
-		            let midY = (p.touches[0].y + p.touches[1].y) / 2;
+		    		let midX = (p.touches[0].x + p.touches[1].x) / 2;
+		    		let midY = (p.touches[0].y + p.touches[1].y) / 2;
 
-		            offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
-		            offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
-		        }
+		    		offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
+		    		offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
+		    	}
 
-		        previousDistance = currentDistance;
-		        pinchZooming = true;
+		    	previousDistance = currentDistance;
+		    	pinchZooming = true;
 		    }
 
 		    // Constrain offsets so you can't pan outside the canvas
@@ -314,13 +317,13 @@
 		};
 
 		p.touchEnded = () => {
-		    userControl = true;
-		    explored = true;
+			userControl = true;
+			explored = true;
 
-		    if (p.touches.length === 1 && wasPinching) {
+			if (p.touches.length === 1 && wasPinching) {
 		        // If transitioning from a pinch, avoid jumping offsets
-		        startX = p.touches[0].x - offsetX;
-		        startY = p.touches[0].y - offsetY;
+				startX = p.touches[0].x - offsetX;
+				startY = p.touches[0].y - offsetY;
 		        wasPinching = false; // Reset pinch flag
 		    }
 
@@ -433,12 +436,12 @@
 							value > 0
 							) {
 							this.score = 1;
-						}
 					}
 				}
+			}
 
 		        // Smoothly transition varPct using lerp for a smoother visual effect
-				this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
+			this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
 		        this.varPct = p.lerp(this.varPct, this.targetVarPct, 0.1); // Gradually move towards the target value
 		    }
 
@@ -492,22 +495,14 @@
 			        p.map(data[this.index].score, minmax[0], minmax[1], h, marginTop),
 			        marginTop,
 			        h
-			    ); // Adjust x based on score
-			    // if (zoomedGuidedTour || stage != "explore") {
-			    //     this.target.x = p.constrain(
-			    //         p.map(data[this.index].A_MEAN, moneyMinMax[0], moneyMinMax[1], 0, w),
-			    //         0,
-			    //         w
-			    //     ); // Adjust y based on A_MEAN
-			    // } else {
-			        this.target.x = p.constrain(
-			            p.map(data[this.index].A_MEAN, 30000, 140000, paddingX, w-paddingX),
-			            paddingX,
-			            w-paddingX
-			        ); // Adjust y based on A_MEAN
-			    // }
+			    ); 
+			    this.target.x = p.constrain(
+			        p.map(data[this.index].A_MEAN, 30000, 140000, paddingX, w-paddingX),
+			        paddingX,
+			        w-paddingX
+			    );
 
-			    // Calculate the direction to the target position for both x and y
+			    // Calculate the direction to the target position
 			    let directionToTarget = p.createVector(
 			        this.target.x - this.center.x,
 			        this.target.y - this.center.y
@@ -515,7 +510,7 @@
 			    directionToTarget.mult(0.05); // Control the speed of movement toward the target
 
 			    let friction = this.velocity.copy();
-			    friction.mult(-0.2); // Apply a small amount of friction to smooth out the movement
+			    friction.mult(-0.3); // Apply more friction to further slow down movement
 
 			    // Apply movement toward the target and friction
 			    this.acceleration.add(directionToTarget);
@@ -539,10 +534,10 @@
 
 			    // Constrain the circle within screen bounds
 			    this.center.x = p.constrain(this.center.x, this.radius, w - this.radius);
-			    this.center.y = p.constrain(this.center.y, this.radius, h - this.radius);
+			    this.center.y = p.constrain(this.center.y, this.radius + marginTop, h - this.radius);
 
-			    // Apply damping to simulate energy loss
-			    this.velocity.mult(0.95); // Reduce velocity slightly each frame
+			    // Apply stronger damping to simulate energy loss
+			    this.velocity.mult(0.9); // Stronger damping to slow down circles faster
 
 			    // Reset acceleration for the next frame
 			    this.acceleration.mult(0);
@@ -552,47 +547,47 @@
 			}
 
 			collide(other) {
-				let distance = p.Vector.dist(this.center, other.center);
-			    let minDist = (this.radius/1.5 + other.radius/1.5); // The minimum distance to prevent overlap
+			    let distance = p.Vector.dist(this.center, other.center);
+			    let minDist = (this.radius/1.4 + other.radius/1.4); // The minimum distance to prevent overlap
 			    if (distance < minDist) {
 			        // Calculate the overlap distance
-			    	let overlap = minDist - distance;
+			        let overlap = minDist - distance;
 
 			        // Calculate the direction of the overlap
-			    	let direction = p.Vector.sub(other.center, this.center);
-			    	direction.normalize();
+			        let direction = p.Vector.sub(other.center, this.center);
+			        direction.normalize();
 
 			        // Apply the correction to fully separate the circles
-			    	let correction = direction.copy().mult(overlap / 6);
-			    	this.center.sub(correction);
-			    	other.center.add(correction);
+			        let correction = direction.copy().mult(overlap / 6);
+			        this.center.sub(correction);
+			        other.center.add(correction);
 
 			        // Calculate relative velocity in the direction of the collision
-			    	let relativeVelocity = p.Vector.sub(this.velocity, other.velocity);
-			    	let bounce = relativeVelocity.dot(direction);
+			        let relativeVelocity = p.Vector.sub(this.velocity, other.velocity);
+			        let bounce = relativeVelocity.dot(direction);
 
 			        // Reduce bounce effect significantly
-			        let bounceFactor = 0.4; // Further reduce bounce intensity
+			        let bounceFactor = 0.3; // Reduce bounce even further
 			        let bounceEffect = direction.copy().mult(bounce * bounceFactor);
 			        this.velocity.sub(bounceEffect);
 			        other.velocity.add(bounceEffect);
 
-			        // Apply strong damping to reduce velocity after bounce
-			        let dampingFactor = 0.2; // Increase damping to reduce energy retention further
+			        // Apply stronger damping to reduce velocity after bounce
+			        let dampingFactor = 0.15; // Stronger damping for faster energy dissipation
 			        this.velocity.mult(dampingFactor);
 			        other.velocity.mult(dampingFactor);
 
 			        // Gradually reduce velocity to encourage settling
-			        this.velocity.mult(0.95);
-			        other.velocity.mult(0.95);
+			        this.velocity.mult(0.92);
+			        other.velocity.mult(0.92);
 
-			        // Stop the circles if their velocity is below a threshold
-			        let velocityThreshold = 0.2; // Define a low velocity threshold
+			        // Stop the circles if their velocity is below a slightly higher threshold
+			        let velocityThreshold = 0.3; // Increased threshold for stopping
 			        if (this.velocity.mag() < velocityThreshold) {
-			        	this.velocity.set(0, 0);
+			            this.velocity.set(0, 0);
 			        }
 			        if (other.velocity.mag() < velocityThreshold) {
-			        	other.velocity.set(0, 0);
+			            other.velocity.set(0, 0);
 			        }
 			    }
 			}
@@ -622,6 +617,10 @@
 					p.strokeWeight(1 / zoom);
 					p.circle(this.center.x, this.center.y, 10);
 				} else if (data[this.index].score != -1) {
+					if (searchValue == this.obj.OCCUPATION) {
+						p.stroke(252, 186, 3);
+						p.strokeWeight(2 / zoom);
+					}
 					p.circle(this.center.x, this.center.y, this.radius);	
 			        const transitionSpeed = 0.3; // Smooth transition speed
 			        const filledColor = p.color("#ff69f2");
@@ -707,27 +706,27 @@
 			    // Determine shouldDisplayText based on prioritization rules, with hovered overriding
 			    let shouldDisplayText = 
 			    (this.hovered ||  // Hovering should override everything
-			    (prioritizeVarPct && 
-			    ((this.radius > 30 && !this.checkTextOverlap(otherCircles)) || 
-			    (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour)))));
+			    	(prioritizeVarPct && 
+			    		((this.radius > 30 && !this.checkTextOverlap(otherCircles)) || 
+			    			(!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour)))));
 
 			    // Search value checks
 			    if (searchValue != "" && searchValue != this.obj.OCCUPATION) {
-			        shouldDisplayText = false;
+			    	shouldDisplayText = false;
 			    } else if (searchValue != "" && searchValue == this.obj.OCCUPATION) {
-			        shouldDisplayText = true;
+			    	shouldDisplayText = true;
 			    }
 
 			    const textWidth = p.textWidth(this.obj.OCC_SHORT);
 
 			    // Prevent text display if it extends outside canvas bounds when zoom is near 1
 			    if ((this.center.x - textWidth / 2 < 0 || this.center.x + textWidth / 2 > w) && Math.abs(zoom - 1) < 0.1) {
-			        shouldDisplayText = false;
+			    	shouldDisplayText = false;
 			    }
 
 			    // Always highlight "You"
-			    if (this.obj.OCCUPATION == "You" || this.hovered) {
-			        shouldDisplayText = true;
+			    if (this.obj.OCCUPATION == "You" || this.hovered || searchValue == this.obj.OCCUPATION) {
+			    	shouldDisplayText = true;
 			    }
 
 			    // Gradually fade in or out the text
@@ -740,11 +739,11 @@
 			    // Only draw text if it's at least partially visible
 			    if (this.alpha > 0) {
 			        // Set the fill color with current alpha for fading effect
-			        if (this.obj.OCCUPATION == "You") {
-			            p.fill(252, 186, 3, this.alpha);
-			        } else {
-			            p.fill(255, 255, 255, this.alpha);    
-			        }
+			    	if (this.obj.OCCUPATION == "You" || searchValue == this.obj.OCCUPATION) {
+			    		p.fill(252, 186, 3, this.alpha);
+			    	} else {
+			    		p.fill(224, 209, 232, this.alpha);    
+			    	}
 
 			        const maxTextWidth = 100 / zoom; // Scale the maximum width based on zoom
 			        const scaledFontSize = 12 / zoom; // Adjust font size based on zoom
@@ -766,13 +765,13 @@
 			        let xPos = this.center.x; // Center the text horizontally with the circle
 			        let yPos = this.center.y - this.radius / 2 - (3 / zoom); // Place the text 3 pixels above the circle, scaled by zoom
 			        p.stroke("#150317");
-			        p.strokeWeight(2/zoom);
+			        p.strokeWeight(3/zoom);
 			        if (searchValue == "") {
 			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        } else if (searchValue == this.obj.OCCUPATION && data[this.index].score != -1) {
 			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        }
-			       
+
 
 			        this.textDisplayed = true; // Mark text as displayed
 			    } else {
