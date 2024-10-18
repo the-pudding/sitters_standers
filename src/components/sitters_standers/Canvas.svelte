@@ -2,11 +2,10 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored;
+	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar;
 	let prevStageNumber = currentStageNumber;
 	let circles = [];
 	let dotSize = 5; 
-	export let currentVar;
 	let new_currentVar = -1;
 	let prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 	let multiplier = 0.038;
@@ -25,13 +24,16 @@
 	let startTouches = []; // To store touch points for pinch zoom
 	let previousDistance = null; // To store the previous distance between two touches
 	let atlasGrotesk;
-	let marginTop = 80;
+	let marginTop = 60;
 	const marginBottom = 200;
 	let divider = 1; // divides number of dots for smaller screens
 	let moneyMinMax = [999999,-999999];
 	let stage;
+	let maxSpeed = 15;
+	let maxForce = 5;
 	const paddingX = 20;
-
+	const no_hl_list = ["A_MEAN","INJURY_RATE"]; // things to not highlight
+	let no_hl = false;
 	const sketch = (p) => {
 
 		p.preload = () => {
@@ -39,7 +41,6 @@
 		}
 		p.setup = () => {
 			w = p.constrain(p.windowWidth,800,6000);
-			// h = p.windowHeight - 6;
 			h = p.windowHeight - marginBottom;
 			dotSize = 4;
 			p.createCanvas(w, h);
@@ -56,6 +57,11 @@
 			if (currentStageNumber != prevStageNumber || zoomedGuidedTour) {
 				userControl = false;
 				prevStageNumber = currentStageNumber;
+				if (no_hl_list.indexOf(currentVar) != -1) {
+					no_hl = true;
+				} else {
+					no_hl = false;
+				}
 			}
 			if (!userControl) {
 				setStage();
@@ -63,19 +69,33 @@
 			p.clear();
 			p.smooth();
 			p.background("#150317");
-			p.textFont(atlasGrotesk);
+			
 			p.push();
 			p.translate(offsetX, offsetY);
 			p.scale(zoom);
-			// moneyMinMax = [10000,50000];
+
+			if (currentStageNumber != 0) {
+				p.stroke("#5c395c");
+				p.strokeWeight(0.5/zoom);
+				p.line(w/2,-h*3,w/2,h*3);
+				p.textSize(15/zoom);
+				p.fill(255,255,255);
+				p.textAlign(p.RIGHT);
+				p.textFont('Arial');
+				p.text("←",w/2 - (94/zoom), 23/zoom);
+				p.textAlign(p.LEFT);
+				p.text("→",w/2 + (106/zoom), 23/zoom);
+
+				p.textFont(atlasGrotesk);
+				p.textAlign(p.RIGHT);
+				p.text("Sitters",w/2 - (34/zoom), (23/zoom));
+				p.textAlign(p.LEFT);
+				p.text("Standers",w/2 + (30/zoom), (23/zoom));
+			}
+
+			
 			for (let i = 0; i < circles.length; i++) {
-				if (checkDisplay(i)) {
-					// if (circles[i].obj.A_MEAN <= moneyMinMax[0]) {
-					// 	moneyMinMax[0] = circles[i].obj.A_MEAN - 5000;
-					// }
-					// if (circles[i].obj.A_MEAN >= moneyMinMax[1]) {
-					// 	moneyMinMax[1] = circles[i].obj.A_MEAN + 5000;
-					// }
+				if (checkDisplay(i) && data[i].score != -1) {
 					circles[i].updateGroup();
 					circles[i].update();
 					circles[i].display();
@@ -88,7 +108,7 @@
 			}
 
 			for (let i = 0; i < circles.length; i++) {
-				if (checkDisplay(i)) {
+				if (checkDisplay(i) && data[i].score != -1) {
 					circles[i].hovered = false;
 					// Adjust the mouse position to account for zoom and pan
 					let adjustedMouseX = (p.mouseX - offsetX) / zoom;
@@ -105,9 +125,6 @@
 			if (currentVar != new_currentVar) {
 				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 				new_currentVar = currentVar;
-				if (copy.story[currentStageNumber].stage == "explore") {
-					searchValue = "";
-				}
 			}
 			p.pop();
 		};
@@ -183,8 +200,16 @@
 			offsetXTarget = p.width / 2 - targetX * zoomTarget;
 			offsetYTarget = p.height / 2 - targetY * zoomTarget;
 			let lerpSpeed = 0.05;
-			if (zoomedGuidedTour || userControl) {
+			maxSpeed = 12;
+			maxForce = 5;
+			if (currentStageNumber == 0) {
 				lerpSpeed = 0.1;
+				maxSpeed = 15;
+				maxForce = 10;
+			} else if (zoomedGuidedTour || userControl) {
+				lerpSpeed = 0.05;
+				maxSpeed = 2;
+				maxForce = 1;
 			} 
 			zoom = p.lerp(zoom, zoomTarget, lerpSpeed);
 			offsetX = p.lerp(offsetX, offsetXTarget, lerpSpeed);
@@ -384,6 +409,7 @@
 				this.varPct = 0; // Initialize varPct
 				this.targetVarPct = 0;
         		this.prevVarPct = 0; // Initialize previous varPct
+        		this.xValue = obj[x_axis_variable];
         	}
 
         	calculateOptimalRadius(totalDots, dotSize) {
@@ -441,7 +467,7 @@
 			}
 
 		        // Smoothly transition varPct using lerp for a smoother visual effect
-			this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
+				this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
 		        this.varPct = p.lerp(this.varPct, this.targetVarPct, 0.1); // Gradually move towards the target value
 		    }
 
@@ -485,6 +511,8 @@
 			}
 
 			update() {
+				this.maxSpeed = maxSpeed;
+				this.maxForce = maxForce;
 			    this.radius = this.calculateOptimalRadius(this.obj.dots / divider, dotSize);
 			    this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
 			    if (this.obj.OCCUPATION == "You") {
@@ -497,7 +525,7 @@
 			        h
 			    ); 
 			    this.target.x = p.constrain(
-			        p.map(data[this.index].A_MEAN, 30000, 140000, paddingX, w-paddingX),
+			        p.map(data[this.index][x_axis_variable], x_axis_variable_range[x_axis_variable][0],  x_axis_variable_range[x_axis_variable][1], paddingX, w-paddingX),
 			        paddingX,
 			        w-paddingX
 			    );
@@ -627,8 +655,10 @@
 			        const unfilledColor = p.color("#523c50");
 
 			        // Calculate how many dots to fill based on smoothed varPct
-			        const dotsToFill = Math.round(this.obj.dots / divider * (this.varPct / 100));
-
+			        let dotsToFill = Math.round(this.obj.dots / divider * (this.varPct / 100));
+			        if (no_hl) {
+			        	dotsToFill = 0;
+			        }
 			        // Display each dot with smooth color transitions
 			        for (let i = 0; i < this.peoplePositions.length; i++) {
 			        	p.noStroke();
@@ -697,7 +727,7 @@
 			    const varPctThreshold = 20; // Threshold for varPct when currentVar is not empty
 
 			    // Check if currentVar is empty or null, or if the circle is hovered
-			    if (currentVar && this.varPct > varPctThreshold) {
+			    if (this.obj[currentVar] > 30 && ((this.xValue > 50 && bg == "stand") || (this.xValue < 50 && bg == "sit")) ) {
 			        prioritizeVarPct = true; // Only prioritize and show when varPct > 20
 			    } else if (!currentVar || this.hovered) {
 			        prioritizeVarPct = true; // If currentVar is empty or the circle is hovered
@@ -742,7 +772,7 @@
 			    	if (this.obj.OCCUPATION == "You" || searchValue == this.obj.OCCUPATION) {
 			    		p.fill(252, 186, 3, this.alpha);
 			    	} else {
-			    		p.fill(224, 209, 232, this.alpha);    
+			    		p.fill(161, 142, 171, this.alpha);    
 			    	}
 
 			        const maxTextWidth = 100 / zoom; // Scale the maximum width based on zoom
@@ -765,7 +795,7 @@
 			        let xPos = this.center.x; // Center the text horizontally with the circle
 			        let yPos = this.center.y - this.radius / 2 - (3 / zoom); // Place the text 3 pixels above the circle, scaled by zoom
 			        p.stroke("#150317");
-			        p.strokeWeight(3/zoom);
+			        p.strokeWeight(6/zoom);
 			        if (searchValue == "") {
 			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        } else if (searchValue == this.obj.OCCUPATION && data[this.index].score != -1) {

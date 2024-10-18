@@ -1,34 +1,37 @@
 <script>
-	export let currentStageNumber, axis_variable;
+	export let currentStageNumber, axis_variable, x_axis_variable_range, x_axis_variable, axis_flip;
 	import { fade } from 'svelte/transition';
 </script>
 
-{#if currentStageNumber > 0}
+{#if currentStageNumber > 0 && axis_variable != -1}
 <div class="yaxis" transition:fade>
-<!-- 	<div class="top desktop">↑ Higher pay</div>
-	<div class="bottom desktop">↓ Lower pay</div> -->
+	{#if axis_flip == 1}
+	<div class="top mobile">↓ Less {axis_variable}</div>
+	<div class="bottom mobile">↑ More {axis_variable}</div>
+	{:else}	
 	<div class="top mobile">↑ More {axis_variable}</div>
 	<div class="bottom mobile">↓ Less {axis_variable}</div>
+	{/if}
+
 </div>
 {/if}
 
 
 <div class="xaxis">
-	{#if currentStageNumber > 1}
-<!-- 	<div class="left desktop" transition:fade>← Less like your job</div>
-	<div class="right desktop" transition:fade>More like your job →</div> -->
-	<div class="left mobile" transition:fade>← Lower pay</div>
-	<div class="right mobile" transition:fade>Higher pay →</div>
-	{/if}
+	<!-- {#if currentStageNumber > 1}
+	<div class="left mobile" transition:fade>← {x_axis_variable_range[x_axis_variable][2]}</div>
+	<div class="right mobile" transition:fade>{x_axis_variable_range[x_axis_variable][3]} →</div>
+	{/if} -->
 </div>
 
 
 <style>
 	.yaxis, .xaxis {
 		user-select: none;
-		font-size: 13px;
+		font-size: 15px;
 		pointer-events: none;
-		color: var(--color-light-purple);
+/* 		color: var(--color-light-purple); */
+		color:  white;
 		text-shadow: 
 		1px 1px 0px var(--color-bg), /* Bottom-right shadow */
 		-1px -1px 0px var(--color-bg), /* Top-left shadow */
@@ -45,21 +48,24 @@
 		position: absolute;
 		left: 0px;
 		top: 0px;
-		width: 200px;
+		width: 100%;
 		pointer-events: none;
 		height: 100%;
 		z-index: 100;
-		text-align: left;
+		text-align: center;
+		user-select: none;
 	}
 	.yaxis .top {
 		position: absolute;
 		top: 10px;
-		left: 5px;
+		left:  0px;
+		text-align:  left;
 	}
 	.yaxis .bottom {
 		position: absolute;
 		bottom: 40px;
-		left: 5px;
+		left:  0px;
+		text-align:  left;
 	}
 
 	.xaxis {

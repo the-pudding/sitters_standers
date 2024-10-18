@@ -1,10 +1,11 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
 
 	export let currentStageNumber, copy, data, currentVar, searchValue;
-
+	let animationLength = 0;
 	const dispatch = createEventDispatcher();
 
 	// This function now dispatches both the answer and the currentVar to the parent
@@ -32,9 +33,12 @@
 		if (text != undefined) {
 			let textArray = text.split(/(\n\n|\r\r|\n\r|\r\n)/);
 			textArray.forEach(function(line) {
+				// Convert Markdown-style links [text](url) into HTML <a> tags
+				line = line.replace(/\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g, '<a href="$2">$1</a>');
+
 				if (line.indexOf("Component|") != -1) {
 					let compName = line.split("|")[1];
-					line = `<svelte:component this=${compName}></svelte:component>`
+					line = `<svelte:component this=${compName}></svelte:component>`;
 				}
 				
 				if (line.indexOf("IMAGE|") != -1) {
@@ -46,7 +50,7 @@
 				if (/[A-Za-z0-9]/.test(line)) {
 					finalText.push(line);	
 				}				
-			})
+			});
 			return wrapInPTags(finalText);
 		}
 	}
@@ -98,6 +102,10 @@
 
 	$: {		
 		currentVar;
+		animationLength = 0;
+		if (copy.story[currentStageNumber].addclass == "longform") {
+			animationLength = 1000;
+		}
 		if (copy.story[currentStageNumber].job != undefined) {
 			searchValue = copy.story[currentStageNumber].job;
 		} else if (copy.story[currentStageNumber].job == undefined && copy.story[currentStageNumber].stage != "explore") {
@@ -106,12 +114,14 @@
 	}
 </script>
 
-<div class="question">
+<div class="question {copy.story[currentStageNumber].addclass}">
 	<div class="progressBar" style="width: {currentStageNumber/(copy.story.length - 1)*100}%"></div>
 	<!-- <div class="kicker">{copy.story[currentStageNumber].cat}</div> -->
-	<div class="text">
+	{#key currentStageNumber}
+	<div class="text" in:fade={{duration:animationLength}}>
 		{@html convertToHTML(copy.story[currentStageNumber].text)}
 	</div>
+	{/key}
 	
 	<div class="answers stage_{currentStageNumber}">
 		{#if currentStageNumber < copy.story.length - 1}

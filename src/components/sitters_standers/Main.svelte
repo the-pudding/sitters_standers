@@ -9,31 +9,45 @@
 	export let data;
 	export let currentQuestionNum = 0;
 	export let currentStageNumber;
+	export let x_axis_variable;
 	let selectedIndices = [];
 	let prevSelectedIndices = [];
 	let searchValue = "";
 	let selectedSalary = 50000;
 	let explored = false;
+	let bg;
+	
+	
+	let x_axis_variable_range = {
+		"A_MEAN": [30000,110000, "Less money","More money"],
+		"nonwhite_pct": [0,.5, "Fewer nonwhite people","More nonwhite people"],
+		"noncitizen_pct": [0,0.2,"Fewer noncitizens","More noncitizens"],
+		"Percent of day where standing is required, mean": [0,100,"Sitters","Standers"],
+		"PCT_STAND": [0,100,"Sitters","Standers"]
+	}
+
+
 
 	/*------ set to true when not testing
 	-----------------------------------------------*/
-	let introActive = true;
+	let introActive = false;
 
 
 	let currentIntroActive = true;
 	let minmax = [-1,1];
 	let minIndicies = [];
-	let maxIndicies = []
+	let maxIndicies = [];
 
 	let currentData = Array(copy.questions.length).fill(1);
 	let currentVar = undefined;
 	let prevVar = undefined;
 	let currentQuestionOrder = copy.questions.map(question => question.variable);
 	let axis_variable = "";
+	let axis_flip = "";
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
-	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary};
-	data.push(you);
+	// let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary};
+	// data.push(you);
 
 	function handleUpdateQuestion(event, num) {
 		currentStageNumber = currentStageNumber + event.detail.answer; // answer is 1 for forward, -1 for backward 
@@ -54,45 +68,48 @@
 			]);
 
 		// Update You
-		for (let i = 0; i < selectedVariables.length; i++) {
-			const varname = selectedVariables[i][0];
-			const qanswer = selectedVariables[i][1];
-			const varcat = selectedVariables[i][2];
-			data[data.length-1][varname] = qanswer*100;
-		}
+		// for (let i = 0; i < selectedVariables.length; i++) {
+		// 	const varname = selectedVariables[i][0];
+		// 	const qanswer = selectedVariables[i][1];
+		// 	const varcat = selectedVariables[i][2];
+		// 	data[data.length-1][varname] = qanswer*100;
+		// }
 		data[data.length-1]["A_MEAN"] = selectedSalary;
 
 	    // Step 1: Collect all the scores
 		let scoresWithIndices = [];
-
+		let nudgeDirection = 1;
+		let nudgeAmount = 0;
 		for (let i = 0; i < data.length; i++) {
 			data[i]["score"] = 0;
-			data[i]["similarity_score"] = 0;
+			// data[i]["similarity_score"] = 0;
 			
 			// for similarity score
-			for (let j = 0; j < selectedVariables.length; j++) {
-				const varname = selectedVariables[j][0];
-				const qanswer = selectedVariables[j][1];
-				const varcat = selectedVariables[j][2];
-				let sim_value = 0;
-				if (varname in data[i]) {
-					sim_value = Number(data[i][varname].toString().replace(/[^0-9.]/g, ''));
-				}
-				if (varcat != "noquestion") {
-					if (qanswer == 0) {
-						data[i]["similarity_score"] -= sim_value;
-					} else {
-						data[i]["similarity_score"] += sim_value;
-					}
-				}
-			}
-			if (copy.story[currentStageNumber].hl == "" || copy.story[currentStageNumber].hl == undefined) {
-				data[i].score = data[i]["similarity_score"];
+			// for (let j = 0; j < selectedVariables.length; j++) {
+			// 	const varname = selectedVariables[j][0];
+			// 	const qanswer = selectedVariables[j][1];
+			// 	const varcat = selectedVariables[j][2];
+			// 	let sim_value = 0;
+			// 	if (varname in data[i]) {
+			// 		sim_value = Number(data[i][varname].toString().replace(/[^0-9.]/g, ''));
+			// 	}
+			// 	if (varcat != "noquestion") {
+			// 		if (qanswer == 0) {
+			// 			data[i]["similarity_score"] -= sim_value;
+			// 		} else {
+			// 			data[i]["similarity_score"] += sim_value;
+			// 		}
+			// 	}
+			// }
+			if (copy.story[currentStageNumber].hl == undefined) {
+				data[i].score = 50 + (nudgeDirection * nudgeAmount);
+				nudgeDirection = nudgeDirection * -1;
+				nudgeAmount += 0.05;
 			} else {
 				// for variable score
 				let value = 0;
 				if (currentVar in data[i]) {
-					if (data[i][currentVar] == "") {
+					if (data[i][currentVar] == "" || data[i][x_axis_variable] == "") {
 						value = -1;
 					} else {
 						value = Number(data[i][currentVar].toString().replace(/[^0-9.]/g, ''));
@@ -101,63 +118,89 @@
 				data[i].score += value;
 			}
 	        // Add the score along with its index to scoresWithIndices array
-			scoresWithIndices.push({ index: i, score: data[i].score, dots: data[i].dots });
+			scoresWithIndices.push({ job: data[i].OCCUPATION, index: i, n: data[i].n, score: data[i].score, dots: data[i].dots, value: data[i][x_axis_variable] });
 		}
 
-	    // Step 3: Sort the scoresWithIndices array by score in ascending order
-		scoresWithIndices.sort((a, b) => a.score - b.score);
+		
+	    // Sort to figure out the top X and bottom X
+		const scoresWithValues = [...scoresWithIndices].sort((a, b) => a.value - b.value);
 		const numberOfIntroJobs = 10;
-	    // Step 4: Get the bottom 10 scores (first 10 in the sorted array)
-		minIndicies = scoresWithIndices.slice(0, numberOfIntroJobs).map(item => item.index);
+		minIndicies = scoresWithValues.slice(0, numberOfIntroJobs).map(item => item.index);
+		maxIndicies = scoresWithValues.slice(-numberOfIntroJobs).map(item => item.index);
+		const firstMatchingItem = scoresWithIndices.find(item => item.n == 157);
+		if (firstMatchingItem) {
+		    maxIndicies.unshift(firstMatchingItem.index);
+		}
+		const secondMatchingItem = scoresWithIndices.find(item => item.n == 44);
+		if (secondMatchingItem) {
+		    minIndicies.unshift(secondMatchingItem.index);
+		}
 
-	    // Step 5: Get the top 10 scores (last 10 in the sorted array)
-		maxIndicies = scoresWithIndices.slice(-numberOfIntroJobs).map(item => item.index);
-		// maxIndicies.push(data.length-1)
-		const smoothingAmount = 5;
-
-	    // Step 7: Calculate the average of the lowest smoothingAmount scores
+		// Get min and max
+		scoresWithIndices.sort((a, b) => a.score - b.score);
+		const smoothingAmounts = [10,10];
 		let sortedScores = scoresWithIndices.map(item => item.score);
-
-		let minAvg = sortedScores.slice(0, smoothingAmount).reduce((sum, score) => sum + score, 0) / smoothingAmount;
-
-	    // Step 8: Calculate the average of the highest smoothingAmount scores
-		let maxAvg = sortedScores.slice(-smoothingAmount).reduce((sum, score) => sum + score, 0) / smoothingAmount;
-
-	    // Step 9: Set minmax to these average values
+		let minAvg = sortedScores.slice(0, smoothingAmounts[0]).reduce((sum, score) => sum + score, 0) / smoothingAmounts[0];
+		let maxAvg = sortedScores.slice(-smoothingAmounts[1]).reduce((sum, score) => sum + score, 0) / smoothingAmounts[1];
 		minmax[0] = minAvg;
 		minmax[1] = maxAvg;
 
-	    // Step 10: Move the first item with at least 6 dots to the front of maxIndicies
-		let found = false;
-
-	    // Check maxIndicies for an item with at least 4 dots
-		for (let i = maxIndicies.length - 1; i >= 0; i--) {
-			const index = maxIndicies[i];
-			if (data[index].dots >= 6) {
-	            // Remove the found item from its current position
-				maxIndicies.splice(i, 1);
-	            // Insert it at the front of the array
-				maxIndicies.unshift(index);
-				found = true;
-				break;
-			}
+		// Custom min-max
+		if (currentVar == undefined) {
+			minmax = [0,100];
+		}
+		if (currentVar == "white_pct") {
+			minmax = [65,90];
+		}
+		if (currentVar == "black_pct") {
+			minmax = [3,23];
+		}
+		if (currentVar == "hisp_pct") {
+			minmax = [7,30];
+		}
+		if (currentVar == "asian_pct") {
+			minmax = [0,18];
+		}
+		if (currentVar == "noncitizen_pct") {
+			minmax = [2,20];
+		}
+		if (currentVar == "A_MEAN") {
+			minmax = [30000,120000];
 		}
 
-	    // If no item in maxIndicies has at least 4 dots, find one in the entire sorted array
-		if (!found) {
-			for (let i = scoresWithIndices.length - 1; i >= 0; i--) {
-				if (scoresWithIndices[i].dots >= 6) {
-					const index = scoresWithIndices[i].index;
-	                // Insert it at the front of maxIndicies
-					maxIndicies.unshift(index);
-	                // Remove the last item to maintain the number of intro jobs
-					if (maxIndicies.length > numberOfIntroJobs) {
-						maxIndicies.pop();
-					}
-					break;
-				}
-			}
-		}
+		console.log(minmax)
+
+	    // // Step 10: Move the first item with at least 6 dots to the front of maxIndicies
+		// let found = false;
+
+	    // // Check maxIndicies for an item with at least 4 dots
+		// for (let i = maxIndicies.length - 1; i >= 0; i--) {
+		// 	const index = maxIndicies[i];
+		// 	if (data[index].dots >= 6) {
+	    //         // Remove the found item from its current position
+		// 		maxIndicies.splice(i, 1);
+	    //         // Insert it at the front of the array
+		// 		maxIndicies.unshift(index);
+		// 		found = true;
+		// 		break;
+		// 	}
+		// }
+
+	    // // If no item in maxIndicies has at least 4 dots, find one in the entire sorted array
+		// if (!found) {
+		// 	for (let i = scoresWithIndices.length - 1; i >= 0; i--) {
+		// 		if (scoresWithIndices[i].dots >= 6) {
+		// 			const index = scoresWithIndices[i].index;
+	    //             // Insert it at the front of maxIndicies
+		// 			maxIndicies.unshift(index);
+	    //             // Remove the last item to maintain the number of intro jobs
+		// 			if (maxIndicies.length > numberOfIntroJobs) {
+		// 				maxIndicies.pop();
+		// 			}
+		// 			break;
+		// 		}
+		// 	}
+		// }
 	}
 
 	$: {
@@ -166,9 +209,13 @@
 			currentIntroActive = introActive;
 			prevSelectedIndices = selectedIndices; 
 			prevVar = currentVar;
+			searchValue = copy.story[currentStageNumber].job == undefined ? "" : copy.story[currentStageNumber].job ;
 		}
-		let foundObject = copy.questions.find(obj => obj.variable === copy.story[currentStageNumber].hl);
-		axis_variable = foundObject ? foundObject.axis_variable : "like your job"; // Safely access axis_variable
+		
+		let foundObject = copy.questions.find(obj => obj.variable === currentVar);
+		axis_variable = foundObject ? foundObject.axis_variable : -1; // Safely access axis_variable
+		axis_flip = foundObject ? foundObject.axis_flip : ""; // Safely access axis_flip
+		bg = copy.story[currentStageNumber].bg;
 		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies, searchValue, selectedSalary;
 		updateData();
 	}
@@ -184,8 +231,10 @@
 	{/if}
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
-		<Canvas {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:explored/>
-		<Axis {currentStageNumber} {axis_variable} />
+		<Canvas {bg} {x_axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:explored/>
+		{#key axis_variable}
+		<Axis {currentStageNumber} {axis_flip} {axis_variable} {x_axis_variable} {x_axis_variable_range} />
+		{/key}
 		<Text bind:searchValue {currentStageNumber} {copy} {data} {currentVar} on:updateCurrentVar={handleCurrentVarUpdate} on:updateQuestion={handleUpdateQuestion}  />
 	</div>
 	{/if}
@@ -220,22 +269,22 @@
 
 .exploreInstruction {
 /*	background: rgba(0,0,0,.8);*/
-	border-radius:10px;
-	color: black;
-	position: fixed;
-	padding: 20px;
-	left: 50%;
-	top: 50%;
-	width: 100px;
-	height: 100px;
-	transform: translate(-50%, -50%);
+border-radius:10px;
+color: black;
+position: fixed;
+padding: 20px;
+left: 50%;
+top: 50%;
+width: 100px;
+height: 100px;
+transform: translate(-50%, -50%);
 }
 .exploreInstruction img {
 	position: absolute;
 	left: 50%;
 	top: 50%;
-	width: 100px;
-	height: 100px;
+	width: 60px;
+	height: 60px;
 	transform: translate(-50%, -50%);
 	animation: moveRotate 4s infinite ease-in-out;
 	opacity: 1;

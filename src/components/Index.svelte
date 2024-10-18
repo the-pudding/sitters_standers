@@ -5,18 +5,19 @@
 	// import Footer from "$components/Footer.svelte";
 
 	const copy = getContext("copy");
+	let x_axis_variable = "PCT_STAND";
 	let currentStageNumber = 0;
 	copy.questions = copy.questions.map((question, index) => ({
 		...question,
 		index: index
 	}));
-	// copy.first_question[0].options = copy.questions
-	// 	.filter(question => question.excluded !== "1")
-	// 	.map(question => question.short);
 	const data = getContext("data");
+
+	// Filter out data where x_axis_variable is undefined or null
+	const filteredData = data.filter(d => d[x_axis_variable] != "");
+
 	$: currentStageNumber;
 </script>
 
 <Header {currentStageNumber}/>
-<Sitters_Standers {copy} {data} bind:currentStageNumber />
-<!-- <Footer /> -->
+<Sitters_Standers {copy} data={filteredData} {x_axis_variable} bind:currentStageNumber />

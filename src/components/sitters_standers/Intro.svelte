@@ -129,7 +129,6 @@
     	if (searchValue == "") {
     		nodatashown = false;
     	}
-    	console.log(jobSearchShown)
     }
 </script>
 
