@@ -145,9 +145,14 @@
 			if (stage == "other_similar_jobs_you" && (maxIndicies.includes(n) || n == data.length-1)) {
 				return true;
 			}
-			if (stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n) || n == data.length-1)) {
+			if (stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
 				return true;
 			}
+
+			if (stage == "other_dissimilar_jobs_andyou" && (minIndicies.includes(n) || maxIndicies.includes(n) || n == data.length-1)) {
+				return true;
+			}
+
 			if (stage == "all_jobs_zoomout") {
 				zoomedGuidedTour = false;
 				return true;

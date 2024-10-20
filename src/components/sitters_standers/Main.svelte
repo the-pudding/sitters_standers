@@ -30,7 +30,7 @@
 
 	/*------ set to true when not testing
 	-----------------------------------------------*/
-	let introActive = false;
+	let introActive = true;
 
 
 	let currentIntroActive = true;
@@ -46,8 +46,8 @@
 	let axis_flip = "";
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
-	// let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary};
-	// data.push(you);
+	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary};
+	data.push(you);
 
 	function handleUpdateQuestion(event, num) {
 		currentStageNumber = currentStageNumber + event.detail.answer; // answer is 1 for forward, -1 for backward 
@@ -68,12 +68,12 @@
 			]);
 
 		// Update You
-		// for (let i = 0; i < selectedVariables.length; i++) {
-		// 	const varname = selectedVariables[i][0];
-		// 	const qanswer = selectedVariables[i][1];
-		// 	const varcat = selectedVariables[i][2];
-		// 	data[data.length-1][varname] = qanswer*100;
-		// }
+		for (let i = 0; i < selectedVariables.length; i++) {
+			const varname = selectedVariables[i][0];
+			const qanswer = selectedVariables[i][1];
+			const varcat = selectedVariables[i][2];
+			data[data.length-1][varname] = qanswer*100;
+		}
 		data[data.length-1]["A_MEAN"] = selectedSalary;
 
 	    // Step 1: Collect all the scores
