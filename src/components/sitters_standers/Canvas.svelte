@@ -380,7 +380,7 @@
 		function resize() {
 			if (p.windowWidth < 860) {
 				w = p.windowWidth;
-				h = p.windowHeight - marginBottom;
+				h = p.windowHeight - marginBottom + 80;
 				marginTop = 70;
 			} else {
 				w = p.windowWidth - 250;
@@ -489,7 +489,7 @@
 			}
 
 		        // Smoothly transition varPct using lerp for a smoother visual effect
-				this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
+			this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
 		        this.varPct = p.lerp(this.varPct, this.targetVarPct, 0.1); // Gradually move towards the target value
 		    }
 
@@ -535,28 +535,37 @@
 			update() {
 				this.maxSpeed = maxSpeed;
 				this.maxForce = maxForce;
-			    this.radius = this.calculateOptimalRadius(this.obj.dots / divider, dotSize);
-			    this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
-			    if (this.obj.OCCUPATION == "You") {
-			        this.radius = 10;
-			    }
+				this.radius = this.calculateOptimalRadius(this.obj.dots / divider, dotSize);
+				this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
+				if (this.obj.OCCUPATION == "You") {
+					this.radius = 10;
+				}
 			    // Set the target x and y positions based on data
-			    this.target.y = p.constrain(
-			        p.map(data[this.index].score, minmax[0], minmax[1], h-30, marginTop),
-			        marginTop,
-			        h
-			    ); 
-			    this.target.x = p.constrain(
-			        p.map(data[this.index][x_axis_variable], x_axis_variable_range[x_axis_variable][0],  x_axis_variable_range[x_axis_variable][1], paddingX, w-paddingX),
-			        paddingX,
-			        w-paddingX
-			    );
+				if (w > 860) {
+					this.target.y = p.constrain(
+						p.map(data[this.index].score, minmax[0], minmax[1], h-30, marginTop),
+						marginTop,
+						h
+						); 
+				} else {
+					this.target.y = p.constrain(
+						p.map(data[this.index].score, minmax[0], minmax[1], h-30, marginTop),
+						marginTop,
+						h-150
+						); 
+				}
+
+				this.target.x = p.constrain(
+					p.map(data[this.index][x_axis_variable], x_axis_variable_range[x_axis_variable][0],  x_axis_variable_range[x_axis_variable][1], paddingX, w-paddingX),
+					paddingX,
+					w-paddingX
+					);
 
 			    // Calculate the direction to the target position
-			    let directionToTarget = p.createVector(
-			        this.target.x - this.center.x,
-			        this.target.y - this.center.y
-			    );
+				let directionToTarget = p.createVector(
+					this.target.x - this.center.x,
+					this.target.y - this.center.y
+					);
 			    directionToTarget.mult(0.05); // Control the speed of movement toward the target
 
 			    let friction = this.velocity.copy();
@@ -568,7 +577,7 @@
 
 			    // Limit the acceleration to this.maxForce
 			    if (this.acceleration.mag() > this.maxForce && !zoomedGuidedTour) {
-			        this.acceleration.setMag(this.maxForce);
+			    	this.acceleration.setMag(this.maxForce);
 			    }
 
 			    // Update velocity with acceleration
@@ -576,7 +585,7 @@
 
 			    // Limit the velocity to this.maxSpeed
 			    if (this.velocity.mag() > this.maxSpeed && !zoomedGuidedTour) {
-			        this.velocity.setMag(this.maxSpeed);
+			    	this.velocity.setMag(this.maxSpeed);
 			    }
 
 			    // Update center position with the new velocity
@@ -597,24 +606,24 @@
 			}
 
 			collide(other) {
-			    let distance = p.Vector.dist(this.center, other.center);
+				let distance = p.Vector.dist(this.center, other.center);
 			    let minDist = (this.radius/1.4 + other.radius/1.4); // The minimum distance to prevent overlap
 			    if (distance < minDist) {
 			        // Calculate the overlap distance
-			        let overlap = minDist - distance;
+			    	let overlap = minDist - distance;
 
 			        // Calculate the direction of the overlap
-			        let direction = p.Vector.sub(other.center, this.center);
-			        direction.normalize();
+			    	let direction = p.Vector.sub(other.center, this.center);
+			    	direction.normalize();
 
 			        // Apply the correction to fully separate the circles
-			        let correction = direction.copy().mult(overlap / 6);
-			        this.center.sub(correction);
-			        other.center.add(correction);
+			    	let correction = direction.copy().mult(overlap / 6);
+			    	this.center.sub(correction);
+			    	other.center.add(correction);
 
 			        // Calculate relative velocity in the direction of the collision
-			        let relativeVelocity = p.Vector.sub(this.velocity, other.velocity);
-			        let bounce = relativeVelocity.dot(direction);
+			    	let relativeVelocity = p.Vector.sub(this.velocity, other.velocity);
+			    	let bounce = relativeVelocity.dot(direction);
 
 			        // Reduce bounce effect significantly
 			        let bounceFactor = 0.3; // Reduce bounce even further
@@ -634,10 +643,10 @@
 			        // Stop the circles if their velocity is below a slightly higher threshold
 			        let velocityThreshold = 0.3; // Increased threshold for stopping
 			        if (this.velocity.mag() < velocityThreshold) {
-			            this.velocity.set(0, 0);
+			        	this.velocity.set(0, 0);
 			        }
 			        if (other.velocity.mag() < velocityThreshold) {
-			            other.velocity.set(0, 0);
+			        	other.velocity.set(0, 0);
 			        }
 			    }
 			}

@@ -174,6 +174,9 @@ button:active {
 	background: rgba(21, 3, 23, 0.9);
 	z-index:  9999;
 }
+.question.longform::before {
+	background:  none;
+}
 .progressBar {
 	position: absolute;
 	height: 3px;

@@ -27,7 +27,7 @@
 
 <style>
 	.yaxis, .xaxis {
-		opacity:  0.5;
+		opacity:  0.8;
 		user-select: none;
 		font-size: 14px;
 		pointer-events: none;
@@ -47,26 +47,26 @@
 
 	.yaxis {
 		position: absolute;
-		right: 10px;
+		left: 10px;
 		top: 0px;
 		width: calc(100% - 10px);
 		pointer-events: none;
-		height: 100%;
+		height: 98%;
 		z-index: 100;
-		text-align: right;
+		text-align: left;
 		user-select: none;
 	}
 	.yaxis .top {
 		position: absolute;
 		top: 10px;
-		right:  0px;
-		text-align:  right;
+		left:  0px;
+		text-align:  left;
 	}
 	.yaxis .bottom {
 		position: absolute;
 		bottom: 10px;
-		right:  0px;
-		text-align:  right;
+		left:  0px;
+		text-align:  left;
 	}
 
 	.xaxis {
@@ -84,10 +84,11 @@
 			opacity:  1;
 		}
 		.yaxis .bottom {
-			bottom:  40px;
+			bottom:  45px;
 		}
 		.yaxis .top {
-			top: 50px;
+			top:  auto;
+			bottom: 55px;
 		}
 		.yaxis, .xaxis {
 			font-size:  13px;

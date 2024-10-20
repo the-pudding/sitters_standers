@@ -420,7 +420,7 @@
 		.panel {
 			left: 50%;
 			transform:  translateX(-50%);
-			top: 10px;
+			top: 48px;
 		}
 	}
 
