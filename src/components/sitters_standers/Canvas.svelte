@@ -2,7 +2,7 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar;
+	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar, reset;
 	let prevStageNumber = currentStageNumber;
 	let circles = [];
 	let dotSize = 5; 
@@ -54,6 +54,12 @@
 			resize();
 		};
 		p.draw = () => {
+
+			if (reset) {
+				console.log("reset")
+				p.reset();
+				reset = false;
+			}
 			if (currentStageNumber != prevStageNumber || zoomedGuidedTour) {
 				userControl = false;
 				prevStageNumber = currentStageNumber;
@@ -67,7 +73,7 @@
 				setStage();
 			}
 			p.clear();
-			p.smooth();
+			// p.smooth();
 			p.background("#150317");
 			
 			p.push();
@@ -184,16 +190,20 @@
 				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
 			}
 			if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs") {
-				centerAndZoomOnCoordinate(w/2, h/2, 1);
-			}
-			if (copy.story[currentStageNumber].stage == "all_jobs_zoomout") {
 				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
 			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_zoomout") {
+				centerAndZoomOnCoordinate(w/2, h/2, 0.95);
+			}
 			if (copy.story[currentStageNumber].stage == "all_jobs_hl") {
-				centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 1);
+				centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 0.95);
 			}
 			if (copy.story[currentStageNumber].stage == "all_jobs") {
-				centerAndZoomOnCoordinate(w/2, h/2, 1);
+				let nudge = 0;
+				if (w > 840) {
+					nudge = w/50;
+				}
+				centerAndZoomOnCoordinate(w/2 + nudge, h/2, 0.95);
 			}
 		}
 
@@ -683,7 +693,7 @@
 
 			            // Set the fill to the interpolated color
 			        	p.fill(this.currentColors[i]);
-			        	p.ellipse(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize);
+			        	p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
 			        }
 			    }
 			}
@@ -784,7 +794,8 @@
 			    	if (this.obj.OCCUPATION == "You" || searchValue == this.obj.OCCUPATION) {
 			    		p.fill(252, 186, 3, this.alpha);
 			    	} else {
-			    		p.fill(161, 142, 171, this.alpha);    
+			    		// p.fill(161, 142, 171, this.alpha);    
+			    		p.fill(191, 172, 201, this.alpha);    
 			    	}
 
 			        const maxTextWidth = 100 / zoom; // Scale the maximum width based on zoom
@@ -807,7 +818,7 @@
 			        let xPos = this.center.x; // Center the text horizontally with the circle
 			        let yPos = this.center.y - this.radius / 2 - (3 / zoom); // Place the text 3 pixels above the circle, scaled by zoom
 			        p.stroke("#150317");
-			        p.strokeWeight(6/zoom);
+			        p.strokeWeight(4/zoom);
 			        if (searchValue == "") {
 			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        } else if (searchValue == this.obj.OCCUPATION && data[this.index].score != -1) {

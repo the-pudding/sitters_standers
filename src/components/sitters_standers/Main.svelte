@@ -15,10 +15,10 @@
 	let prevSelectedIndices = [];
 	let searchValue = "";
 	let selectedSalary = 50000;
-	let selectedStandingHours = 2;
+	let selectedStandingPct = 20;
 	let explored = false;
 	let bg;
-	
+	let reset = false;
 	
 	let x_axis_variable_range = {
 		"A_MEAN": [30000,110000, "Less money","More money"],
@@ -48,7 +48,7 @@
 	let axis_flip = "";
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
-	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary, "PCT_STAND": selectedStandingHours/8*100 };
+	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary, "PCT_STAND": selectedStandingPct };
 	data.push(you);
 
 	function handleUpdateQuestion(event, num) {
@@ -81,7 +81,7 @@
 			}
 		}
 		data[data.length-1]["A_MEAN"] = selectedSalary;
-		data[data.length-1]["PCT_STAND"] = selectedStandingHours/8*100;
+		data[data.length-1]["PCT_STAND"] = selectedStandingPct;
 	    // Step 1: Collect all the scores
 		let scoresWithIndices = [];
 		let nudgeDirection = 1;
@@ -133,21 +133,21 @@
 		const scoresWithValues = [...scoresWithIndices].sort((a, b) => a.value - b.value);
 		const numberOfIntroJobs = 10;
 		minIndicies = scoresWithValues
-		  .filter(item => item.job !== "You")
-		  .slice(0, numberOfIntroJobs)
-		  .map(item => item.index);
+		.filter(item => item.job !== "You")
+		.slice(0, numberOfIntroJobs)
+		.map(item => item.index);
 
 		maxIndicies = scoresWithValues
-		  .filter(item => item.job !== "You")
-		  .slice(-numberOfIntroJobs)
-		  .map(item => item.index);
+		.filter(item => item.job !== "You")
+		.slice(-numberOfIntroJobs)
+		.map(item => item.index);
 		const firstMatchingItem = scoresWithIndices.find(item => item.n == 157);
 		if (firstMatchingItem) {
-		    maxIndicies.unshift(firstMatchingItem.index);
+			maxIndicies.unshift(firstMatchingItem.index);
 		}
 		const secondMatchingItem = scoresWithIndices.find(item => item.n == 44);
 		if (secondMatchingItem) {
-		    minIndicies.unshift(secondMatchingItem.index);
+			minIndicies.unshift(secondMatchingItem.index);
 		}
 
 		// Get min and max
@@ -221,20 +221,22 @@
 			currentIntroActive = introActive;
 			prevSelectedIndices = selectedIndices; 
 			prevVar = currentVar;
-			searchValue = copy.story[currentStageNumber].job == undefined ? "" : copy.story[currentStageNumber].job ;
+			if (copy.story[currentStageNumber].stage != "explore") {
+				searchValue = copy.story[currentStageNumber].job == undefined ? "" : copy.story[currentStageNumber].job;	
+			}
 		}
 		
 		let foundObject = copy.questions.find(obj => obj.variable === currentVar);
 		axis_variable = foundObject ? foundObject.axis_variable : -1; // Safely access axis_variable
 		axis_flip = foundObject ? foundObject.axis_flip : ""; // Safely access axis_flip
 		bg = copy.story[currentStageNumber].bg;
-		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies, searchValue, selectedSalary, selectedStandingHours;
+		currentVar, currentQuestionNum, minmax, minIndicies, maxIndicies, searchValue, selectedSalary, selectedStandingPct;
 		updateData();
 	}
 </script>
 
 <div class="container">
-	<Intro {copy} {data} {currentStageNumber} bind:selectedSalary bind:searchValue bind:selectedIndices bind:introActive bind:selectedStandingHours bind:questionNumber/>
+	<Intro {copy} {data} {currentStageNumber} bind:selectedSalary bind:searchValue bind:selectedIndices bind:introActive bind:selectedStandingPct bind:questionNumber/>
 	{#if copy.story[currentStageNumber].cat == "ExploreInstruction" && !explored}
 	<div class="exploreInstruction" transition:fade>
 		<img src="assets/app/hand.png"/>
@@ -243,11 +245,11 @@
 	{/if}
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
-		<Canvas {bg} {x_axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:explored/>
+		<Canvas {bg} {x_axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:reset bind:explored/>
 		{#key axis_variable}
 		<Axis {currentStageNumber} {axis_flip} {axis_variable} {x_axis_variable} {x_axis_variable_range} />
 		{/key}
-		<Text bind:searchValue {currentStageNumber} {copy} {data} {currentVar} on:updateCurrentVar={handleCurrentVarUpdate} on:updateQuestion={handleUpdateQuestion} bind:introActive  bind:questionNumber/>
+		<Text bind:searchValue {currentStageNumber} {copy} {data} {currentVar} on:updateCurrentVar={handleCurrentVarUpdate} on:updateQuestion={handleUpdateQuestion} bind:introActive  bind:questionNumber bind:reset/>
 	</div>
 	{/if}
 </div>
@@ -255,8 +257,8 @@
 <style>
 	.container {
 		position: fixed;
-		width: calc(100% - 250px);
-		left: 250px;
+		width: calc(100% - 300px);
+		left: 300px;
 		top: 0px;
 		height: 100vh;
 		background: var(--color-bg);
@@ -269,23 +271,23 @@
 			bottom: 150px;
 		}
 	}
-.canvasContainer {
-	cursor: move; /* fallback if grab cursor is unsupported */
-	cursor: grab;
-	cursor: -moz-grab;
-	cursor: -webkit-grab;
-}
-.canvasContainer:active {
-	cursor: grabbing;
-	cursor: -moz-grabbing;
-	cursor: -webkit-grabbing;
-}
+	.canvasContainer {
+		cursor: move; /* fallback if grab cursor is unsupported */
+		cursor: grab;
+		cursor: -moz-grab;
+		cursor: -webkit-grab;
+	}
+	.canvasContainer:active {
+		cursor: grabbing;
+		cursor: -moz-grabbing;
+		cursor: -webkit-grabbing;
+	}
 
-.exploreInstruction {
+	.exploreInstruction {
 /*	background: rgba(0,0,0,.8);*/
 border-radius:10px;
 color: black;
-position: fixed;
+position: absolute;
 padding: 20px;
 left: 50%;
 top: 50%;

@@ -8,7 +8,7 @@
 	export let introActive;
 	export let searchValue;
 	export let selectedSalary;
-	export let selectedStandingHours;
+	export let selectedStandingPct;
 	let searchIndex = -999;
 
 	let shown = false;
@@ -41,23 +41,20 @@
 		}
 	}
 	function toggleJobSearch() {
-		jobSearchShown = !jobSearchShown;
+		// jobSearchShown = !jobSearchShown;
 		if (jobSearchShown) {
 			shown = false;
 		}
-		if (!jobSearchShown) {
-			searchValue = "";
-			query = "";
-		}
+		// if (!jobSearchShown) {
+		// 	searchValue = "";
+		// 	query = "";
+		// }
 	}
 
 	function getMidpoint(n) {
         // Handle the "$150,000+" case separately
 		if (n === "$150,000+") {
             return 150000; // Or any higher value you want to represent
-        }
-        if (n == "8+ hours") {
-        	return 8;
         }
         
         // Split the range into numbers
@@ -85,7 +82,7 @@
         } else {
             selectedStandingIndex = index; // Set the new selected index
         }
-        selectedStanding = getMidpoint(hours);
+        selectedStandingPct = getMidpoint(hours);
     }
 
 
@@ -180,7 +177,7 @@
 				</button>
 				{/each}
 				{:else if questionOrder[questionNumber] == "stand_sit"}
-				{#each ["0 to 2 hour","2 to 4 hours","4 to 6 hours","5 to 8 hours","8+ hours"] as hours, index}
+				{#each ["0 to 20%","20 to 40%","40 to 60%","60 to 80%","80 to 100%"] as hours, index}
 				<button class="answerItem {selectedStandingIndex === index ? 'selected' : ''}" on:click={() => addStanding(hours, index)}>
 					{@html hours}
 				</button>
@@ -236,8 +233,8 @@
 {/if}
 
 
-{#if copy.story[currentStageNumber].stage == "explore"}
-<button class="toolbutton jobSearch" class:selected={jobSearchShown} on:click={toggleJobSearch}>
+<!-- {#if copy.story[currentStageNumber].stage == "explore"}
+<button class="toolbutton jobSearch answerButton" class:selected={jobSearchShown} on:click={toggleJobSearch}>
 	{#if !jobSearchShown && searchValue != ""}
 	x Close search
 	{:else if jobSearchShown || searchValue != ""}
@@ -247,8 +244,8 @@
 	{/if}
 </button>
 {/if}
-
-{#if jobSearchShown}
+ -->
+{#if !introActive && copy.story[currentStageNumber].stage == "explore"}
 <div class="panel jobSearch">
 	<input bind:value={query}  on:focus={inputFocus} placeholder="Search job titles..."/>
 	<Fuzzy {query} {data} {options} bind:formatted />
@@ -315,7 +312,7 @@
 		left: auto;
 		left: 20px;
 		border: 1px solid var(--color-light-purple);
-		top: 263px;
+		top: 223px;
 		width: 220px;
 		padding: 0px;
 		scrollbar-width: inherit;
@@ -381,21 +378,21 @@
 	}
 
 	.toolbutton {
-		background: var(--color-dark-purple);
-		color: var(--color-off-purple);
+/* 		background: var(--color-light-purple); */
+/* 		color: var(--color-off-purple); */
 		position: fixed;
-		background: var(--color-dark-purple);
+/* 		background: var(--color-dark-purple); */
 		border: 1px solid #473847;
 		cursor: pointer;
-		font-size: 13px;
+/* 		font-size: 13px; */
 		z-index: 10001;
 		width: 140px;
 		text-align: center;
-		border-radius: 0px;
+/* 		border-radius: 0px; */
 		user-select: none;
 	}
 	.toolbutton.selected {
-		background: var(--color-light-purple);
+		background: var(--color-lighter-purple);
 		border: 1px solid var(--color-light-purple);
 	}
 	.toolbutton.hideShow, .toolbutton.jobSearch {
@@ -403,7 +400,7 @@
 		top: 220px;
 	}
 	.toolbutton:hover {
-		color: white;
+/* 		color: white; */
 		z-index: 99999;
 	}
 	@media (width <= 800px) {
@@ -421,10 +418,9 @@
 			top: 20px;
 		}
 		.panel {
-		left: auto;
-		right: 20px;
-		top: 53px;
-		width: 279px;
+			left: 50%;
+			transform:  translateX(-50%);
+			top: 10px;
 		}
 	}
 

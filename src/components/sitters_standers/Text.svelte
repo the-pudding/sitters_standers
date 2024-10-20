@@ -4,7 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
 
-	export let currentStageNumber, copy, data, currentVar, searchValue, introActive, questionNumber;
+	export let currentStageNumber, copy, data, currentVar, searchValue;
 	let animationLength = 0;
 	const dispatch = createEventDispatcher();
 
@@ -80,8 +80,6 @@
 
 	function skip() {
 		if (currentStageNumber == copy.story.length - 1) {
-			questionNumber = 0;
-			introActive = true;
 			button(-currentStageNumber);
 		} else {
 			button(copy.story.length - currentStageNumber - 1);	
