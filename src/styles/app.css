@@ -132,14 +132,16 @@ button:active {
 .question {
 	position: fixed;
 	left: 0%;
-	width: 100%;
-	height: 182px;
+	width: 250px;
+	height: 100vh;
 	background: rgba(21, 3, 23, 1);
+	background:  var(--color-dark-purple);
 	bottom: 0px;
 	padding: 20px 0 0 0;
 	color: white;
 	z-index: 1000;
 	font-size: 14px;
+	border-right:  1px solid rgba(255,255,255,0.1);
 	transition: background 400ms cubic-bezier(0.250, 0.100, 0.250, 1.000); 
 	transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
 }
@@ -147,11 +149,6 @@ button:active {
 	height: 100vh;
 	background: rgba(21, 3, 23, 0.9);
 	z-index:  9999;
-}
-.question.longform .text {
-	left:  50%;
-	top:  50%;
-	transform:  translate(-50%, -50%);
 }
 .progressBar {
 	position: absolute;
@@ -165,10 +162,37 @@ button:active {
 }
 .text, .answers {
 	position: absolute;	
-	width: 500px;
-	max-width: 100%;
-	left: 50%;
-	transform: translateX(-50%);
+	width: 215px;
+	left: 20px;
+}
+.text {
+	top:  30px;
+}
+.answers.stage_explore {
+	bottom: auto;
+	top:  200px;
+}
+@media (width <= 860px) {
+	.question {
+		width: 100%;
+		height: 182px;
+		border-right:  none;
+	}
+	.text {
+		top:  10px;
+	}
+	.text, .answers {
+		position: absolute;	
+		width: 500px;
+		max-width: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	.question.longform .text {
+		left:  50%;
+		top:  50%;
+		transform:  translate(-50%, -50%);
+	}
 }
 .answers {
 	text-align: center;
@@ -237,8 +261,8 @@ button:active {
 
 .text {
 	margin-top: 10px;
-	font-size: 15px;
-	line-height: 21px;
+	font-size: 14px;
+	line-height: 19px;
 }
 .text span {
 	color: var(--color-bright-purple);

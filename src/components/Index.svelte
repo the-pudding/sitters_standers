@@ -6,6 +6,7 @@
 
 	const copy = getContext("copy");
 	let x_axis_variable = "PCT_STAND";
+	let introActive = true;
 	let currentStageNumber = 0;
 	copy.questions = copy.questions.map((question, index) => ({
 		...question,
@@ -19,5 +20,5 @@
 	$: currentStageNumber;
 </script>
 
-<Header {currentStageNumber}/>
-<Sitters_Standers {copy} data={filteredData} {x_axis_variable} bind:currentStageNumber />
+<Header {currentStageNumber} {introActive}/>
+<Sitters_Standers {copy} data={filteredData} {x_axis_variable} bind:introActive bind:currentStageNumber />

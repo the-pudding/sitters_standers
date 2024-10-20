@@ -8,6 +8,7 @@
 	export let introActive;
 	export let searchValue;
 	export let selectedSalary;
+	export let selectedStandingHours;
 	let searchIndex = -999;
 
 	let shown = false;
@@ -18,12 +19,13 @@
 	let formatted = [];
 	let options = { keys: ["OCCUPATION"] };
 	let selectedSalaryIndex = null;
+	let selectedStandingIndex = null;
 	let nodatashown = false;
 	
 
 	const questionOrder = ["intro","stand_sit","body","other","environment","salary"];
 	const buttonOrder = ["Start <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Let's go <span>→</span>"]
-	let questionNumber = 0;
+	export let questionNumber;
 	function toggleAnswer(index) {
 		if (selectedIndices.includes(index)) {
 			selectedIndices = selectedIndices.filter(i => i !== index);
@@ -49,29 +51,43 @@
 		}
 	}
 
-	function getMidpoint(salary) {
+	function getMidpoint(n) {
         // Handle the "$150,000+" case separately
-		if (salary === "$150,000+") {
+		if (n === "$150,000+") {
             return 150000; // Or any higher value you want to represent
+        }
+        if (n == "8+ hours") {
+        	return 8;
         }
         
         // Split the range into numbers
-        const [low, high] = salary
-            .replace(/\$|,/g, '') // Remove "$" and commas
-            .split(' to ')        // Split by " to "
-            .map(Number);         // Convert to numbers
+        const [low, high] = n
+        .replace(/\$|,/g, '') // Remove "$" and commas
+        .split(' to ')        // Split by " to "
+        .map(Number);         // Convert to numbers
 
         // Calculate the midpoint
-            return (low + high) / 2;
-        }
-        function addSalary(salary, index) {
-        	if (selectedSalaryIndex === index) {
+        return (low + high) / 2;
+    }
+
+    function addSalary(salary, index) {
+    	if (selectedSalaryIndex === index) {
             selectedSalaryIndex = null; // Deselect if the same button is clicked again
         } else {
             selectedSalaryIndex = index; // Set the new selected index
         }
         selectedSalary = getMidpoint(salary);
     }
+
+    function addStanding(hours, index) {
+    	if (selectedStandingIndex === index) {
+            selectedStandingIndex = null; // Deselect if the same button is clicked again
+        } else {
+            selectedStandingIndex = index; // Set the new selected index
+        }
+        selectedStanding = getMidpoint(hours);
+    }
+
 
     function buttonBack() {
     	if (questionNumber > 0) {
@@ -161,6 +177,12 @@
 				{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+"] as salary, index}
 				<button class="answerItem {selectedSalaryIndex === index ? 'selected' : ''}" on:click={() => addSalary(salary, index)}>
 					{@html salary}
+				</button>
+				{/each}
+				{:else if questionOrder[questionNumber] == "stand_sit"}
+				{#each ["0 to 2 hour","2 to 4 hours","4 to 6 hours","5 to 8 hours","8+ hours"] as hours, index}
+				<button class="answerItem {selectedStandingIndex === index ? 'selected' : ''}" on:click={() => addStanding(hours, index)}>
+					{@html hours}
 				</button>
 				{/each}
 				{:else}
@@ -291,10 +313,10 @@
 		background: var(--color-dark-purple);;
 		position: fixed;
 		left: auto;
-		right: 20px;
+		left: 20px;
 		border: 1px solid var(--color-light-purple);
-		top: 53px;
-		width: 279px;
+		top: 263px;
+		width: 220px;
 		padding: 0px;
 		scrollbar-width: inherit;
 		scrollbar-color: var(--color-light-purple) var(--color-dark-purple);
@@ -376,24 +398,35 @@
 		background: var(--color-light-purple);
 		border: 1px solid var(--color-light-purple);
 	}
-	.toolbutton.hideShow {
-		right: 20px;
-		top: 20px;
+	.toolbutton.hideShow, .toolbutton.jobSearch {
+		left: 20px;
+		top: 220px;
 	}
-	.toolbutton.jobSearch {
-/*		right: 159px;*/
-right: 20px;
-top: 20px;
-}
-.toolbutton:hover {
-	color: white;
-	z-index: 99;
-}
-	/*@media (width <= 800px) {
+	.toolbutton:hover {
+		color: white;
+		z-index: 99999;
+	}
+	@media (width <= 800px) {
 		.toolbutton {
 			display: none;
 		}
-	}*/
+		.toolbutton.hideShow {
+			left:  auto;
+			right: 20px;
+			top: 20px;
+		}
+		.toolbutton.jobSearch {
+			left:  auto;
+			right: 20px;
+			top: 20px;
+		}
+		.panel {
+		left: auto;
+		right: 20px;
+		top: 53px;
+		width: 279px;
+		}
+	}
 
 	.dotContainer {
 		width: 100%;

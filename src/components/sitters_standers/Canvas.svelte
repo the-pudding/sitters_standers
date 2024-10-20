@@ -149,7 +149,7 @@
 				return true;
 			}
 
-			if (stage == "other_dissimilar_jobs_andyou" && (minIndicies.includes(n) || maxIndicies.includes(n) || n == data.length-1)) {
+			if (stage == "other_dissimilar_jobs_you" && (minIndicies.includes(n) || maxIndicies.includes(n) || n == data.length-1)) {
 				return true;
 			}
 
@@ -368,9 +368,14 @@
 		};
 
 		function resize() {
-			w = p.windowWidth;
-			// h = p.windowHeight - 6;
-			h = p.windowHeight - marginBottom;
+			if (p.windowWidth < 860) {
+				w = p.windowWidth;
+				h = p.windowHeight - marginBottom;
+			} else {
+				w = p.windowWidth - 250;
+				h = p.windowHeight;
+			}
+			
 			dotSize = 4;
 			if (p.windowWidth < 1500) {
 				dotSize = 3;
@@ -525,7 +530,7 @@
 			    }
 			    // Set the target x and y positions based on data
 			    this.target.y = p.constrain(
-			        p.map(data[this.index].score, minmax[0], minmax[1], h, marginTop),
+			        p.map(data[this.index].score, minmax[0], minmax[1], h-30, marginTop),
 			        marginTop,
 			        h
 			    ); 

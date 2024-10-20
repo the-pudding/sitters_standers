@@ -2,11 +2,11 @@
 	// shadow, plain, line, bubble
 	import wordmark from "$svg/wordmark-shadow.svg";
 	import { fade } from 'svelte/transition';
-	export let currentStageNumber;
+	export let currentStageNumber, introActive;
 </script>
 
 <header>
-	{#if currentStageNumber == 0}
+	{#if introActive}
 	<div class="wordmark" transition:fade>
 		<a href="https://pudding.cool" aria-label="The Pudding" target="_self"
 			>{@html wordmark}</a

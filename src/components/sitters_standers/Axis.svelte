@@ -46,9 +46,9 @@
 
 	.yaxis {
 		position: absolute;
-		left: 0px;
+		left: 10px;
 		top: 0px;
-		width: 100%;
+		width: calc(100% - 10px);
 		pointer-events: none;
 		height: 100%;
 		z-index: 100;
@@ -63,7 +63,7 @@
 	}
 	.yaxis .bottom {
 		position: absolute;
-		bottom: 40px;
+		bottom: 10px;
 		left:  0px;
 		text-align:  left;
 	}
@@ -76,8 +76,16 @@
 		width: 100%;
 		height: 30px;
 		text-align: left;
+		opacity:  0;
 	}
-
+	@media (width <= 860px) {
+		.xaxis {
+			opacity:  1;
+		}
+		.yaxis .bottom {
+			bottom:  40px;
+		}
+	}
 	.xaxis .left {
 		position: absolute;
 		bottom: -28px;
