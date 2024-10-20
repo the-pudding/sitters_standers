@@ -28,4 +28,10 @@
 	option {
 		height: 30px;
 	}
+	@media (width <= 860px) {
+		#pulldown {
+			left:  10px;
+			width: calc(100% - 20px);
+		}
+	}
 </style>

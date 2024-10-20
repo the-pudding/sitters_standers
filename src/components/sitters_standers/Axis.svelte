@@ -85,6 +85,13 @@
 		.yaxis .bottom {
 			bottom:  40px;
 		}
+		.yaxis .top {
+			top: 35px;
+		}
+		.yaxis, .xaxis {
+			font-size:  13px;
+			opacity:  0.5;
+		}
 	}
 	.xaxis .left {
 		position: absolute;

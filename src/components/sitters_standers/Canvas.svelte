@@ -371,9 +371,11 @@
 			if (p.windowWidth < 860) {
 				w = p.windowWidth;
 				h = p.windowHeight - marginBottom;
+				marginTop = 70;
 			} else {
 				w = p.windowWidth - 250;
 				h = p.windowHeight;
+				marginTop = 60;
 			}
 			
 			dotSize = 4;
