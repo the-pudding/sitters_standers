@@ -716,25 +716,28 @@
 			        const filledColor = p.color("#ff69f2");
 			        const unfilledColor = p.color("#523c50");
 
-			        // Calculate how many dots to fill based on smoothed varPct
-			        let dotsToFill = Math.round(this.obj.dots / divider * (this.varPct / 100));
-			        // if (no_hl) {
-			        // 	dotsToFill = 0;
-			        // }
-			        // Display each dot with smooth color transitions
-			        for (let i = 0; i < this.peoplePositions.length; i++) {
-			        	p.noStroke();
+					// Calculate how many dots to fill based on smoothed varPct
+					let dotsToFill = this.obj.dots / divider * (this.varPct / 100);
 
-			            // Determine target color based on the smoothed fill state
-			        	let targetColor = i < dotsToFill ? filledColor : unfilledColor;
+					// Display each dot with smooth color transitions
+					for (let i = 0; i < this.peoplePositions.length; i++) {
+					    p.noStroke();
+					    
+					    // Set the fill to unfilledColor to draw the background circle first
+					    p.fill(unfilledColor);
+					    p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
 
-			            // Smoothly interpolate the current color towards the target color
-			        	this.currentColors[i] = p.lerpColor(this.currentColors[i], targetColor, transitionSpeed);
-
-			            // Set the fill to the interpolated color
-			        	p.fill(this.currentColors[i]);
-			        	p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
-			        }
+					    // If the current dot should be partially filled
+					    if (i === Math.floor(dotsToFill) && dotsToFill < i + 1) {
+					        let partialFillAmount = dotsToFill % 1; // Get the fractional part for the fill
+					        p.fill(filledColor);  // Set the fill color to filledColor for the partial dot
+					        p.arc(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize, -p.HALF_PI, -p.HALF_PI + p.TWO_PI * partialFillAmount);
+					    } else if (i < Math.floor(dotsToFill)) {
+					        // Fully filled dots
+					        p.fill(filledColor);
+					        p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
+					    }
+					}
 			    }
 			}
 
