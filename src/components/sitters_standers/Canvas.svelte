@@ -34,6 +34,8 @@
 	const paddingX = 20;
 	const no_hl_list = ["A_MEAN","INJURY_RATE"]; // things to not highlight
 	let no_hl = false;
+	let stageSet = false;
+
 	const sketch = (p) => {
 
 		p.preload = () => {
@@ -105,9 +107,14 @@
 					circles[i].updateGroup();
 					circles[i].update();
 					circles[i].display();
+					
 					for (let j = 0; j < circles.length; j++) {
-						if (j != i && data[j].score != -1 && data[i].score != -1) {
-							circles[i].collide(circles[j]);
+						if (w > 860 || Math.abs(circles[i].center.y - circles[i].target.y) < 50 || Math.abs(circles[i].center.x - circles[i].target.x) < 50) {
+							if (j != i && data[j].score != -1 && data[i].score != -1) {
+								if (w > 860 || Math.abs(circles[i].target.y - circles[j].target.y) < 50 || Math.abs(circles[i].target.x - circles[j].target.x) < 50) {
+									circles[i].collide(circles[j]);
+								}
+							}
 						}
 					}
 				}
@@ -131,6 +138,7 @@
 			if (currentVar != new_currentVar) {
 				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 				new_currentVar = currentVar;
+				stageSet = false;
 			}
 			p.pop();
 		};
@@ -139,7 +147,7 @@
 			zoomedGuidedTour = true;
 			guidedTour = true;
 			stage = copy.story[currentStageNumber].stage;
-			if (stage == "explore") {
+			if (stage == "explore" || stage == "preexplore") {
 				return true;
 			}
 			if (stage == "one_similar_job" && n == maxIndicies[0]) {
@@ -175,13 +183,30 @@
 				guidedTour = false;
 				return true;
 			}
-			
+
 			return false;
 		}
 
 		function setStage() {
 			if (copy.story[currentStageNumber].stage == "explore") {
-				return;
+				if (!stageSet) {
+					if (w < 860) {
+						centerAndZoomOnCoordinate(w/2, h/2-h/20, 0.85, 1);
+					} else {
+						centerAndZoomOnCoordinate(w/2, h/2, 0.9);
+					}
+					stageSet = true;
+				}
+			}
+			if (copy.story[currentStageNumber].stage == "preexplore") {
+				if (!stageSet) {
+					if (w < 860) {
+						centerAndZoomOnCoordinate(w/2, h/2-h/20, 0.85, 1);
+					} else {
+						centerAndZoomOnCoordinate(w/2, h/2, 0.9);
+					}
+					stageSet = true;
+				}
 			}
 			if (copy.story[currentStageNumber].stage == "one_similar_job") {
 				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 4);
@@ -207,7 +232,7 @@
 			}
 		}
 
-		function centerAndZoomOnCoordinate(targetX, targetY, targetZoom) {
+		function centerAndZoomOnCoordinate(targetX, targetY, targetZoom, speed) {
 		    // Set the zoom level to the target zoom
 			zoomTarget = targetZoom;
 
@@ -216,7 +241,7 @@
 			offsetYTarget = p.height / 2 - targetY * zoomTarget;
 			let lerpSpeed = 0.05;
 			maxSpeed = 12;
-			maxForce = 5;
+			maxForce = 20;
 			if (currentStageNumber == 0) {
 				lerpSpeed = 0.1;
 				maxSpeed = 15;
@@ -226,9 +251,15 @@
 				maxSpeed = 2;
 				maxForce = 1;
 			} 
-			zoom = p.lerp(zoom, zoomTarget, lerpSpeed);
-			offsetX = p.lerp(offsetX, offsetXTarget, lerpSpeed);
-			offsetY = p.lerp(offsetY, offsetYTarget, lerpSpeed);
+			if (speed == 1) {
+				zoom = zoomTarget;
+				offsetX = offsetXTarget; 
+				offsetY = offsetYTarget;
+			} else {
+				zoom = p.lerp(zoom, zoomTarget, lerpSpeed);
+				offsetX = p.lerp(offsetX, offsetXTarget, lerpSpeed);
+				offsetY = p.lerp(offsetY, offsetYTarget, lerpSpeed);
+			}
 		}
 
 		// Function to check if mouse is over the p5.js canvas
@@ -388,12 +419,12 @@
 				marginTop = 60;
 			}
 			
-			dotSize = 4;
+			dotSize = 5;
 			if (p.windowWidth < 1500) {
-				dotSize = 3;
+				dotSize = 4;
 			}
-			if (p.windowWidth < 800) {
-				divider = 2;
+			if (p.windowWidth < 860) {
+				dotSize = 2;
 			}
 			p.resizeCanvas(w, h);
 
@@ -607,7 +638,7 @@
 
 			collide(other) {
 				let distance = p.Vector.dist(this.center, other.center);
-			    let minDist = (this.radius/1.4 + other.radius/1.4); // The minimum distance to prevent overlap
+			    let minDist = (this.radius/1.2 + other.radius/1.2); // The minimum distance to prevent overlap
 			    if (distance < minDist) {
 			        // Calculate the overlap distance
 			    	let overlap = minDist - distance;
@@ -617,7 +648,7 @@
 			    	direction.normalize();
 
 			        // Apply the correction to fully separate the circles
-			    	let correction = direction.copy().mult(overlap / 6);
+			    	let correction = direction.copy().mult(overlap / 10);
 			    	this.center.sub(correction);
 			    	other.center.add(correction);
 
@@ -626,7 +657,7 @@
 			    	let bounce = relativeVelocity.dot(direction);
 
 			        // Reduce bounce effect significantly
-			        let bounceFactor = 0.3; // Reduce bounce even further
+			        let bounceFactor = 0.2; // Reduce bounce even further
 			        let bounceEffect = direction.copy().mult(bounce * bounceFactor);
 			        this.velocity.sub(bounceEffect);
 			        other.velocity.add(bounceEffect);
@@ -687,9 +718,9 @@
 
 			        // Calculate how many dots to fill based on smoothed varPct
 			        let dotsToFill = Math.round(this.obj.dots / divider * (this.varPct / 100));
-			        if (no_hl) {
-			        	dotsToFill = 0;
-			        }
+			        // if (no_hl) {
+			        // 	dotsToFill = 0;
+			        // }
 			        // Display each dot with smooth color transitions
 			        for (let i = 0; i < this.peoplePositions.length; i++) {
 			        	p.noStroke();

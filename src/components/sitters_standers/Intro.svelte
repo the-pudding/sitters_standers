@@ -56,13 +56,12 @@
 		if (n === "$150,000+") {
             return 150000; // Or any higher value you want to represent
         }
-        
+
         // Split the range into numbers
         const [low, high] = n
-        .replace(/\$|,/g, '') // Remove "$" and commas
+        .replace(/\$|,|%/g, '') // Remove "$" and commas
         .split(' to ')        // Split by " to "
         .map(Number);         // Convert to numbers
-
         // Calculate the midpoint
         return (low + high) / 2;
     }
@@ -420,7 +419,8 @@
 		.panel {
 			left: 50%;
 			transform:  translateX(-50%);
-			top: 48px;
+			width:  90%;
+			top: 15px;
 		}
 	}
 

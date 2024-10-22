@@ -6,8 +6,8 @@
 {#if currentStageNumber > 0 && axis_variable != -1}
 <div class="yaxis" transition:fade>
 	{#if axis_flip == 1}
-	<div class="top mobile">↓ Less {axis_variable}</div>
-	<div class="bottom mobile">↑ More {axis_variable}</div>
+	<div class="top mobile">↑ Less {axis_variable}</div>
+	<div class="bottom mobile">↓ More {axis_variable}</div>
 	{:else}	
 	<div class="top mobile">↑ More {axis_variable}</div>
 	<div class="bottom mobile">↓ Less {axis_variable}</div>

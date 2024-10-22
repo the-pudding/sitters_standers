@@ -141,8 +141,12 @@ button:active {
 	font-size: 14px;
 	transition: background 400ms cubic-bezier(0.250, 0.100, 0.250, 1.000); 
 	transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
+	user-select: none;
+	pointer-events:  none;
 }
-
+select, button, input {
+	pointer-events:  auto !important;
+}
 .question::before {
 	content: "";
 	position: absolute;
@@ -175,9 +179,7 @@ button:active {
 	background: rgba(21, 3, 23, 0.9);
 	z-index:  9999;
 }
-.question.longform::before {
-	background:  none;
-}
+
 .progressBar {
 	position: absolute;
 	height: 3px;
@@ -206,6 +208,9 @@ button:active {
 		height: 182px;
 		border-right:  none;
 	}
+	.question.longform::before {
+	background:  none;
+}
 	.text {
 		top:  10px;
 	}
@@ -358,6 +363,7 @@ button:active {
 	color: var(--color-light-purple);
 	margin-top:  30px;
 	font-size:  13px;
+	line-height:  16px;
 }
 @media (width <= 540px) {
 	.text, .answers {
@@ -370,4 +376,3 @@ button:active {
 		line-height: 18px;
 	}
 }
-
