@@ -41,12 +41,13 @@
 					line = `<svelte:component this=${compName}></svelte:component>`;
 				}
 				
-				if (line.indexOf("IMAGE|") != -1) {
-					line = '<div class="imageContainer"><img class="desktopImage" src="assets/leftovers/' + line.replace("IMAGE|","").replace(/(\r\n|\n|\r)/gm, "") + '.svg"/><img class="mobileImage" src="assets/leftovers/' + line.replace("IMAGE|","").replace(/(\r\n|\n|\r)/gm, "") + '_mobile.svg"/></div>';
-				}
 				if (line.indexOf(">>") != -1) {
-					line = "<div class='chartPlaceholder'>" + line + "</div>";
+					line = line.replace(">>","")
+					line = '<div class="imageContainer"><h3>' + line.split("|")[1] + '</h3><img class="desktopImage" src="assets/app/' + line.split("|")[0] + '.svg"/><div class="source">' + line.split("|")[2] + '</div></div>';
 				}
+				// if (line.indexOf(">>") != -1) {
+				// 	line = "<div class='chartPlaceholder'>" + line + "</div>";
+				// }
 				if (/[A-Za-z0-9]/.test(line)) {
 					finalText.push(line);	
 				}				

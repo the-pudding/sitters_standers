@@ -88,29 +88,10 @@
 		let nudgeAmount = 0;
 		for (let i = 0; i < data.length; i++) {
 			data[i]["score"] = 0;
-			// data[i]["similarity_score"] = 0;
-			
-			// for similarity score
-			// for (let j = 0; j < selectedVariables.length; j++) {
-			// 	const varname = selectedVariables[j][0];
-			// 	const qanswer = selectedVariables[j][1];
-			// 	const varcat = selectedVariables[j][2];
-			// 	let sim_value = 0;
-			// 	if (varname in data[i]) {
-			// 		sim_value = Number(data[i][varname].toString().replace(/[^0-9.]/g, ''));
-			// 	}
-			// 	if (varcat != "noquestion") {
-			// 		if (qanswer == 0) {
-			// 			data[i]["similarity_score"] -= sim_value;
-			// 		} else {
-			// 			data[i]["similarity_score"] += sim_value;
-			// 		}
-			// 	}
-			// }
 			if (copy.story[currentStageNumber].hl == undefined) {
 				data[i].score = 50 + (nudgeDirection * nudgeAmount);
 				nudgeDirection = nudgeDirection * -1;
-				nudgeAmount += 0.05;
+				nudgeAmount += 0.08;
 			} else {
 				// for variable score
 				let value = 0;
@@ -131,7 +112,7 @@
 		
 	    // Sort to figure out the top X and bottom X
 		const scoresWithValues = [...scoresWithIndices].sort((a, b) => a.value - b.value);
-		const numberOfIntroJobs = 10;
+		const numberOfIntroJobs = 30;
 		minIndicies = scoresWithValues
 		.filter(item => item.job !== "You")
 		.slice(0, numberOfIntroJobs)
@@ -152,7 +133,7 @@
 
 		// Get min and max
 		scoresWithIndices.sort((a, b) => a.score - b.score);
-		const smoothingAmounts = [10,10];
+		const smoothingAmounts = [3,3];
 		let sortedScores = scoresWithIndices.map(item => item.score);
 		let minAvg = sortedScores.slice(0, smoothingAmounts[0]).reduce((sum, score) => sum + score, 0) / smoothingAmounts[0];
 		let maxAvg = sortedScores.slice(-smoothingAmounts[1]).reduce((sum, score) => sum + score, 0) / smoothingAmounts[1];
@@ -217,6 +198,7 @@
 
 	$: {
 		if (currentIntroActive != introActive || selectedIndices != prevSelectedIndices || currentVar != prevVar) {
+			explored = false;
 			updateData();
 			currentIntroActive = introActive;
 			prevSelectedIndices = selectedIndices; 

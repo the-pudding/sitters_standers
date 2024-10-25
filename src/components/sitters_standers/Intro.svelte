@@ -23,7 +23,7 @@
 	let nodatashown = false;
 	
 
-	const questionOrder = ["intro","stand_sit","body","other","environment","salary"];
+	const questionOrder = ["intro","stand_sit","body","other","salary"];
 	const buttonOrder = ["Start <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Let's go <span>→</span>"]
 	export let questionNumber;
 	function toggleAnswer(index) {

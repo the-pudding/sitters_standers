@@ -339,7 +339,9 @@ select, button, input {
 	background: #8f5089;
 	border-radius: 50%;
 }
-
+.text a {
+	pointer-events: auto !important;
+}
 .skipToExplore {
 	background: none;
 	text-align: center;
@@ -365,6 +367,9 @@ select, button, input {
 	font-size:  13px;
 	line-height:  16px;
 }
+.text div.note a {
+	color: var(--color-light-purple);
+}
 @media (width <= 540px) {
 	.text, .answers {
 		width: 100%;
@@ -375,4 +380,23 @@ select, button, input {
 		font-size: 14px;
 		line-height: 18px;
 	}
+}
+.imageContainer {
+	width:  100%;
+	max-width:  300px;
+	margin: 20px auto;
+}
+.imageContainer h3 {
+	font-size:  15px;
+	line-height:  18px;
+	margin-bottom:  15px;
+	font-weight:  bold;
+	color:  white;
+/* 	color:  var(--color-lighter-purple); */
+}
+.imageContainer .source {
+	font-size:  11px;
+	line-height:  13px;
+	margin-top:  10px;
+	color:  var(--color-light-purple);
 }
