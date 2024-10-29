@@ -167,7 +167,7 @@
 				<!-- <h2>{copy.dek}</h2> -->
 				<h3>by <a href="https://pudding.cool/author/alvin-chang/">{copy.byline}</a></h3>
 				<div class="introImage">
-					IMAGE TKTKTK
+					<img src="assets/app/Lead.gif" alt="animation of left person washing clothes, right person typing" />
 				</div>
 				{:else if questionOrder[questionNumber] == "salary"}
 				{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+"] as salary, index}
@@ -455,6 +455,14 @@
 		height: 200px;
 		display: block;
 		font-size: 9px;
-		background: var(--color-lessdark-purple);
+		position: relative;
+/* 		background:  black; */
+/* 		background: var(--color-dark-purple); */
+	}
+	.introImage img {
+		position: absolute;
+		top:  -50px;
+		left:  5%;
+		width:  95%;
 	}
 </style>

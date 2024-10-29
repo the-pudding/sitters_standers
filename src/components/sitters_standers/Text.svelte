@@ -43,7 +43,7 @@
 				
 				if (line.indexOf(">>") != -1) {
 					line = line.replace(">>","")
-					line = '<div class="imageContainer"><h3>' + line.split("|")[1] + '</h3><img class="desktopImage" src="assets/app/' + line.split("|")[0] + '.svg"/><div class="source">' + line.split("|")[2] + '</div></div>';
+					line = '<div class="imageContainer"><h3>' + line.split("|")[1] + '</h3><img class="desktopImage" alt="' + line.split("|")[3] + '" src="assets/app/' + line.split("|")[0] + '.svg"/><div class="source">' + line.split("|")[2] + '</div></div>';
 				}
 				// if (line.indexOf(">>") != -1) {
 				// 	line = "<div class='chartPlaceholder'>" + line + "</div>";
