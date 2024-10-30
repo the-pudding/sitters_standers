@@ -131,7 +131,7 @@ button:active {
 .question {
 	position: fixed;
 	left: 0%;
-	width: 300px;
+	width: 370px;
 	height: 100vh;
 	background: rgba(21, 3, 23, 1);
 	color: white;
@@ -192,7 +192,7 @@ select, button, input {
 }
 .text, .answers {
 	position: absolute;	
-	width: 250px;
+	width: 330px;
 	left: 20px;
 }
 .text {

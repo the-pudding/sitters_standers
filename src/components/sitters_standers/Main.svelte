@@ -239,8 +239,8 @@
 <style>
 	.container {
 		position: fixed;
-		width: calc(100% - 300px);
-		left: 300px;
+		width: calc(100% - 370px);
+		left: 370px;
 		top: 0px;
 		height: 100vh;
 		background: var(--color-bg);

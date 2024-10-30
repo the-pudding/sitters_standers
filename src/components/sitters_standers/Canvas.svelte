@@ -436,7 +436,7 @@
 				h = p.windowHeight - marginBottom + 20;
 				marginTop = 70;
 			} else {
-				w = p.windowWidth - 250;
+				w = p.windowWidth - 370;
 				h = p.windowHeight;
 				marginTop = 60;
 			}
