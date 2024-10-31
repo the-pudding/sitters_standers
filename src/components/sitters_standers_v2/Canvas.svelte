@@ -492,8 +492,7 @@
 			constructor(obj, index) {
 				this.obj = obj;
 				this.index = index;
-				// this.radius = this.calculateOptimalRadius(obj.dots / divider, dotSize);
-				this.radius = p.sqrt(this.obj.TOT_EMP) * 0.02;
+				this.radius = this.calculateOptimalRadius(obj.dots / divider, dotSize);
 				if (obj.OCCUPATION == "You") {
 					this.radius = 10;
 				}
@@ -505,7 +504,7 @@
 				this.velocity = p.createVector(0, 0);
 				this.acceleration = p.createVector(0, 0);
 				this.target = this.center.copy();
-				// this.peoplePositions = this.calculatePeoplePositions(obj.dots / divider);
+				this.peoplePositions = this.calculatePeoplePositions(obj.dots / divider);
 				this.hovered = false;
 				this.maxSpeed = 1;
 				this.maxForce = 1;
@@ -517,43 +516,43 @@
         		this.xValue = obj[x_axis_variable];
         	}
 
-        	// calculateOptimalRadius(totalDots, dotSize) {
-        	// 	if (totalDots <= 1) {
-			//         return 1 * dotSize*1.9; // Only the center dot, hence 1 circle
-			//     }
+        	calculateOptimalRadius(totalDots, dotSize) {
+        		if (totalDots <= 1) {
+			        return 1 * dotSize*1.9; // Only the center dot, hence 1 circle
+			    }
 
-			//     // The number of concentric circles is the largest floor value of sqrt(i) for i up to totalPeople - 1
-			//     let lastIndex = totalDots - 1;
-			//     let numberOfCircles = Math.floor(Math.sqrt(lastIndex)) + 2; // Add 1 because the first circle is counted from 0
-			//     return numberOfCircles*dotSize*1.3;
-			// }
+			    // The number of concentric circles is the largest floor value of sqrt(i) for i up to totalPeople - 1
+			    let lastIndex = totalDots - 1;
+			    let numberOfCircles = Math.floor(Math.sqrt(lastIndex)) + 2; // Add 1 because the first circle is counted from 0
+			    return numberOfCircles*dotSize*1.3;
+			}
 
-			// calculatePeoplePositions(totalPeople) {
-			// 	let positions = [];
-			// 	let centerX = this.center.x;
-			// 	let centerY = this.center.y;
-			// 	let angle = 0;
-			// 	let radiusIncrement = dotSize * 1.2; // Adjust this for packing density
+			calculatePeoplePositions(totalPeople) {
+				let positions = [];
+				let centerX = this.center.x;
+				let centerY = this.center.y;
+				let angle = 0;
+				let radiusIncrement = dotSize * 1.2; // Adjust this for packing density
 
-			// 	for (let i = 0; i < totalPeople; i++) {
-			// 		let x, y;
+				for (let i = 0; i < totalPeople; i++) {
+					let x, y;
 
-			// 		if (i === 0) {
-			// 			// First ellipse at the center
-			// 			x = centerX;
-			// 			y = centerY;
-			// 		} else {
-			// 			// Calculate the position for the next ellipse
-			// 			let currentRadius = Math.floor(Math.sqrt(i)) * radiusIncrement;
-			// 			angle = (i % Math.floor(Math.sqrt(i))) * p.TWO_PI / Math.floor(Math.sqrt(i));
-			// 			x = centerX + currentRadius * p.cos(angle);
-			// 			y = centerY + currentRadius * p.sin(angle);
-			// 		}
+					if (i === 0) {
+						// First ellipse at the center
+						x = centerX;
+						y = centerY;
+					} else {
+						// Calculate the position for the next ellipse
+						let currentRadius = Math.floor(Math.sqrt(i)) * radiusIncrement;
+						angle = (i % Math.floor(Math.sqrt(i))) * p.TWO_PI / Math.floor(Math.sqrt(i));
+						x = centerX + currentRadius * p.cos(angle);
+						y = centerY + currentRadius * p.sin(angle);
+					}
 
-			// 		positions.push(p.createVector(x, y));
-			// 	}
-			// 	return positions;
-			// }
+					positions.push(p.createVector(x, y));
+				}
+				return positions;
+			}
 
 			updateGroup() {
 				this.score = 0;
@@ -578,48 +577,48 @@
 
 
 
-		    // updatePeoplePositions(newCenter) {
-			// 	let maxRadius = this.radius - dotSize; // Maximum radius for the people to be within the circle
-			// 	let currentRadius = dotSize * 1.2; // Start just outside the center ellipse, with minimal spacing
-			// 	let angleIncrement;
-			// 	let ellipsesInCurrentCircle;
-			// 	let angle = 0;
+		    updatePeoplePositions(newCenter) {
+				let maxRadius = this.radius - dotSize; // Maximum radius for the people to be within the circle
+				let currentRadius = dotSize * 1.2; // Start just outside the center ellipse, with minimal spacing
+				let angleIncrement;
+				let ellipsesInCurrentCircle;
+				let angle = 0;
 
-			// 	let newPosition = newCenter.copy(); // Start from the center
+				let newPosition = newCenter.copy(); // Start from the center
 
-			// 	for (let i = 0; i < this.peoplePositions.length; i++) {
-			// 		// Set the current position
-			// 		this.peoplePositions[i] = newPosition.copy();
+				for (let i = 0; i < this.peoplePositions.length; i++) {
+					// Set the current position
+					this.peoplePositions[i] = newPosition.copy();
 
-			// 		// Calculate the number of ellipses in the current circle
-			// 		ellipsesInCurrentCircle = Math.floor(p.TWO_PI * currentRadius / (dotSize*1.2)); // Number of ellipses that can fit in the circumference
-			// 		angleIncrement = p.TWO_PI / ellipsesInCurrentCircle;
+					// Calculate the number of ellipses in the current circle
+					ellipsesInCurrentCircle = Math.floor(p.TWO_PI * currentRadius / (dotSize*1.2)); // Number of ellipses that can fit in the circumference
+					angleIncrement = p.TWO_PI / ellipsesInCurrentCircle;
 
-			// 		// Move to the next position on the current circle
-			// 		angle += angleIncrement;
+					// Move to the next position on the current circle
+					angle += angleIncrement;
 
-			// 		// If a full circle is completed, move to the next concentric circle
-			// 		if (angle >= p.TWO_PI*1.0001) {
-			// 			angle = 0;
-			// 			currentRadius += dotSize * 1; // Move to the next concentric circle
-			// 			// If we exceed the max radius, stop adding more ellipses
-			// 			if (currentRadius > maxRadius) {
-			// 				break;
-			// 			}
-			// 		}
+					// If a full circle is completed, move to the next concentric circle
+					if (angle >= p.TWO_PI*1.0001) {
+						angle = 0;
+						currentRadius += dotSize * 1; // Move to the next concentric circle
+						// If we exceed the max radius, stop adding more ellipses
+						if (currentRadius > maxRadius) {
+							break;
+						}
+					}
 
-			// 		// Calculate the new position based on the current radius and angle
-			// 		let offsetX = currentRadius * p.cos(angle);
-			// 		let offsetY = currentRadius * p.sin(angle);
-			// 		newPosition = p.createVector(newCenter.x + offsetX, newCenter.y + offsetY);
-			// 	}
-			// }
+					// Calculate the new position based on the current radius and angle
+					let offsetX = currentRadius * p.cos(angle);
+					let offsetY = currentRadius * p.sin(angle);
+					newPosition = p.createVector(newCenter.x + offsetX, newCenter.y + offsetY);
+				}
+			}
 
 			update() {
 				this.maxSpeed = maxSpeed;
 				this.maxForce = maxForce;
-				// this.radius = this.calculateOptimalRadius(this.obj.dots / divider, dotSize);
-				// this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
+				this.radius = this.calculateOptimalRadius(this.obj.dots / divider, dotSize);
+				this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
 
 				if (this.obj.OCCUPATION == "You") {
 					this.radius = 10;
@@ -686,7 +685,7 @@
 
 			    // Stop if velocity is very low to prevent minor jittering
 			    this.checkStopThreshold();
-			    // this.updatePeoplePositions(this.center);
+			    this.updatePeoplePositions(this.center);
 			}
 
 
@@ -726,7 +725,7 @@
 
 			collide(other) {
 				let distance = p.Vector.dist(this.center, other.center);
-			    let minDist = (this.radius*1.2 + other.radius*1.2); // Minimum distance to prevent overlap
+			    let minDist = (this.radius / 2 + other.radius / 2); // Minimum distance to prevent overlap
 
 			    if (distance < minDist) {
 			    	let overlap = minDist - distance;
@@ -758,115 +757,66 @@
 			}
 
 
-			display() {
-			    // Set the radius based on TOT_EMP
-			    this.radius = p.sqrt(this.obj.TOT_EMP) * 0.02; // Adjust the scaling factor as needed
 
-			    // Calculate the gradient steps
-			    let numSteps = 10; // Number of gradient steps
-			    let step = p.constrain(p.floor((this.varPct / 100) * numSteps), 0, numSteps - 1);
-
-			    // Define the start and end colors
-			    let startColor = p.color("#594255");
-			    let endColor = p.color("#ff21ed");
-
-			    // Calculate the interpolated color based on varPct
-			    let gradientColor = p.lerpColor(startColor, endColor, step / (numSteps - 1));
-			    let strokeColor = p.lerpColor(startColor, endColor, step / (numSteps - 1));
-			    // Set the fill with some transparency
-			    gradientColor.setAlpha(90); // Adjust the alpha value to control transparency
-			    p.fill(gradientColor);
-
-			    // Draw the main circle with the matching border color
-			    p.stroke(strokeColor); // Use the same color as the fill for the border
-			    p.strokeWeight(1 / zoom);
-			    p.ellipseMode(p.CENTER);
-			    p.circle(this.center.x, this.center.y, this.radius * 2);
-
-			    // Outline the circle when hovered or text is displayed
-			    if (this.hovered || this.textDisplayed) {
-			        p.stroke("#ffffff");
-			        p.strokeWeight(0.4 / zoom);
-			        p.noFill();
-			        p.circle(this.center.x, this.center.y, this.radius * 2);
-			    }
-
-			    // Highlight the circle if it matches the search criteria
-			    if (searchValue === this.obj.OCCUPATION || highlightedJobs.includes(this.obj.OCCUPATION)) {
-			        job_hl_index = this.index;
-			        p.stroke("#ffffff");
-			        p.strokeWeight(1 / zoom);
-			        p.noFill();
-			        p.circle(this.center.x, this.center.y, this.radius * 2);
-			    }
-
-			    // Special case for the "You" occupation
-			    if (this.obj.OCCUPATION === "You") {
-			        p.stroke(252, 186, 3);
-			        p.fill(252, 186, 3);
-			        p.strokeWeight(1 / zoom);
-			        p.circle(this.center.x, this.center.y, 10);
-			    }
-			}
 
 			
-			// display() {
-			// 	p.noFill();
-			// 	p.ellipseMode(p.CENTER);
-			// 	p.strokeWeight(0.4 / zoom);
+			display() {
+				p.noFill();
+				p.ellipseMode(p.CENTER);
+				p.strokeWeight(0.4 / zoom);
 
-			// 	p.stroke("#947594");
+				p.stroke("#947594");
 
-			// 	if (this.hovered || this.textDisplayed) {
-			// 		p.stroke("#ffffff");
-			// 		p.strokeWeight(0.4 / zoom);
-			// 	}
+				if (this.hovered || this.textDisplayed) {
+					p.stroke("#ffffff");
+					p.strokeWeight(0.4 / zoom);
+				}
 
-			// 	if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
-			// 		job_hl_index = this.index;
-			// 		p.stroke("#ffffff");
-			// 		p.strokeWeight(1 / zoom);
-			// 	}
+				if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
+					job_hl_index = this.index;
+					p.stroke("#ffffff");
+					p.strokeWeight(1 / zoom);
+				}
 
-			// 	if (this.obj.OCCUPATION == "You") {
-			// 		p.stroke(252, 186, 3);
-			// 		p.fill(252, 186, 3);
-			// 		p.strokeWeight(1 / zoom);
-			// 		p.circle(this.center.x, this.center.y, 10);
-			// 	} else if (data[this.index].score != -1) {
-			// 		if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
-			// 			p.stroke(252, 186, 3);
-			// 			p.strokeWeight(1.5 / zoom);
-			// 		}
-			// 		p.circle(this.center.x, this.center.y, this.radius);	
-			//         const transitionSpeed = 0.3; // Smooth transition speed
-			//         const filledColor = p.color("#ff69f2");
-			//         const unfilledColor = p.color("#523c50");
+				if (this.obj.OCCUPATION == "You") {
+					p.stroke(252, 186, 3);
+					p.fill(252, 186, 3);
+					p.strokeWeight(1 / zoom);
+					p.circle(this.center.x, this.center.y, 10);
+				} else if (data[this.index].score != -1) {
+					if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
+						p.stroke(252, 186, 3);
+						p.strokeWeight(1.5 / zoom);
+					}
+					p.circle(this.center.x, this.center.y, this.radius);	
+			        const transitionSpeed = 0.3; // Smooth transition speed
+			        const filledColor = p.color("#ff69f2");
+			        const unfilledColor = p.color("#523c50");
 
-			// 		// Calculate how many dots to fill based on smoothed varPct
-			//         let dotsToFill = this.obj.dots / divider * (this.varPct / 100);
+					// Calculate how many dots to fill based on smoothed varPct
+			        let dotsToFill = this.obj.dots / divider * (this.varPct / 100);
 
-			// 		// Display each dot with smooth color transitions
-			//         for (let i = 0; i < this.peoplePositions.length; i++) {
-			//         	p.noStroke();
+					// Display each dot with smooth color transitions
+			        for (let i = 0; i < this.peoplePositions.length; i++) {
+			        	p.noStroke();
 
-			// 		    // Set the fill to unfilledColor to draw the background circle first
-			//         	p.fill(unfilledColor);
-			//         	p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
+					    // Set the fill to unfilledColor to draw the background circle first
+			        	p.fill(unfilledColor);
+			        	p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
 
-			// 		    // If the current dot should be partially filled
-			//         	if (i === Math.floor(dotsToFill) && dotsToFill < i + 1) {
-			// 		        let partialFillAmount = dotsToFill % 1; // Get the fractional part for the fill
-			// 		        p.fill(filledColor);  // Set the fill color to filledColor for the partial dot
-			// 		        p.arc(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize, -p.HALF_PI, -p.HALF_PI + p.TWO_PI * partialFillAmount);
-			// 		    } else if (i < Math.floor(dotsToFill)) {
-			// 		        // Fully filled dots
-			// 		    	p.fill(filledColor);
-			// 		    	p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
-			// 		    }
-			// 		}
-			// 	}
-			// }
+					    // If the current dot should be partially filled
+			        	if (i === Math.floor(dotsToFill) && dotsToFill < i + 1) {
+					        let partialFillAmount = dotsToFill % 1; // Get the fractional part for the fill
+					        p.fill(filledColor);  // Set the fill color to filledColor for the partial dot
+					        p.arc(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize, dotSize, -p.HALF_PI, -p.HALF_PI + p.TWO_PI * partialFillAmount);
+					    } else if (i < Math.floor(dotsToFill)) {
+					        // Fully filled dots
+					    	p.fill(filledColor);
+					    	p.circle(this.peoplePositions[i].x, this.peoplePositions[i].y, dotSize);
+					    }
+					}
+				}
+			}
 
 			checkTextOverlap(otherCircles) {
 			    // Approximate text height and width based on zoom and font size
