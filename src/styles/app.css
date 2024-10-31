@@ -130,15 +130,15 @@ button:active {
 }
 .question {
 	position: fixed;
-	left: 0%;
+	right: 0%;
 	width: 370px;
 	height: 100vh;
-	background: rgba(21, 3, 23, 1);
 	color: white;
 	bottom: 0px;
 	padding: 20px 0 0 0;
 	z-index: 1000;
 	font-size: 14px;
+	border-left:  1px solid var(--color-lessdark-purple);
 	transition: background 400ms cubic-bezier(0.250, 0.100, 0.250, 1.000); 
 	transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
 	user-select: none;
@@ -147,31 +147,10 @@ button:active {
 select, button, input {
 	pointer-events:  auto !important;
 }
-.question::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 14px; /* Adjust width as needed */
-	height: 100%;
-	background: none;
-	/* Use an SVG for just the wavy line */
-	background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 100" preserveAspectRatio="none"><path d="M5 0 Q0 25 5 50 T5 100" fill="none" stroke="%235c395c" stroke-width="2"/></svg>');
-	background-repeat: repeat-y;
-	background-size: 100% 100px; /* Control wave height */
-}
 @media (max-width: 860px) {
-	.question::before {
-		top: 0;
-		right: 0;
-		width: 100%;
-		background:  none;
+	.question {
+		border-left:  none;
 		border-top:  1px solid #5c395c;
-/* 		height: 14px;
-		background-repeat: repeat-x; 
-		background-size: 100px 100%; 
-		background-position: top;
-		background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q25 0 50 5 T100 5" fill="none" stroke="%235c395c" stroke-width="2"/></svg>'); */
 	}
 }
 .question.longform {

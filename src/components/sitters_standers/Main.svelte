@@ -84,52 +84,47 @@
 		data[data.length-1]["PCT_STAND"] = selectedStandingPct;
 	    // Step 1: Collect all the scores
 		let scoresWithIndices = [];
-		let nudgeDirection = 1;
-		let nudgeAmount = 0;
-		for (let i = 0; i < data.length; i++) {
-			data[i]["score"] = 0;
-			if (copy.story[currentStageNumber].hl == undefined) {
-				data[i].score = 50 + (nudgeDirection * nudgeAmount);
-				nudgeDirection = nudgeDirection * -1;
-				nudgeAmount += 0.08;
-			} else {
-				// for variable score
-				let value = 0;
-				if (currentVar in data[i]) {
-					if (data[i][currentVar] == undefined || data[i][currentVar] == "" || data[i][x_axis_variable] == "") {
-						value = -1;
-					} else {
-						value = Number(data[i][currentVar].toString().replace(/[^0-9.]/g, ''));
-					}
-				} else {
-					value = -1;
-				}
-				data[i].score += value;
-			}
-	        // Add the score along with its index to scoresWithIndices array
-			scoresWithIndices.push({ job: data[i].OCCUPATION, index: i, n: data[i].n, score: data[i].score, dots: data[i].dots, value: data[i][x_axis_variable] });
-		}
+		let nudgeDirection = 1, nudgeAmount = 0;
+
+		data.forEach((item, i) => {
+		    item.score = 0;
+
+		    if (copy.story[currentStageNumber].hl === undefined) {
+		        item.score = 50 + (nudgeDirection * nudgeAmount);
+		        nudgeDirection *= -1;
+		        nudgeAmount += 0.01;
+		    } else {
+		        const value = currentVar in item && item[currentVar] && item[x_axis_variable]
+		            ? Number(item[currentVar].toString().replace(/[^0-9.]/g, '')) || -1
+		            : -1;
+		        item.score += value;
+		    }
+
+		    scoresWithIndices.push({
+		        job: item.OCCUPATION,
+		        index: i,
+		        n: item.n,
+		        score: item.score,
+		        dots: item.dots,
+		        value: item[x_axis_variable]
+		    });
+		});
 		
 	    // Sort to figure out the top X and bottom X
 		const scoresWithValues = [...scoresWithIndices].sort((a, b) => a.value - b.value);
 		const numberOfIntroJobs = 30;
-		minIndicies = scoresWithValues
-		.filter(item => item.job !== "You")
-		.slice(0, numberOfIntroJobs)
-		.map(item => item.index);
+		const filteredScores = scoresWithValues.filter(item => item.job !== "You");
 
-		maxIndicies = scoresWithValues
-		.filter(item => item.job !== "You")
-		.slice(-numberOfIntroJobs)
-		.map(item => item.index);
-		const firstMatchingItem = scoresWithIndices.find(item => item.n == 157);
-		if (firstMatchingItem) {
-			maxIndicies.unshift(firstMatchingItem.index);
-		}
-		const secondMatchingItem = scoresWithIndices.find(item => item.n == 44);
-		if (secondMatchingItem) {
-			minIndicies.unshift(secondMatchingItem.index);
-		}
+		minIndicies = filteredScores.slice(0, numberOfIntroJobs).map(item => item.index);
+		maxIndicies = filteredScores.slice(-numberOfIntroJobs).map(item => item.index);
+
+		[scoresWithIndices.find(item => item.n === 157)?.index].forEach(index => {
+		    if (index !== undefined) maxIndicies.unshift(index);
+		});
+
+		[scoresWithIndices.find(item => item.n === 44)?.index].forEach(index => {
+		    if (index !== undefined) minIndicies.unshift(index);
+		});
 
 		// Get min and max
 		scoresWithIndices.sort((a, b) => a.score - b.score);
@@ -140,60 +135,17 @@
 		minmax[0] = minAvg;
 		minmax[1] = maxAvg;
 
-		// Custom min-max
-		if (currentVar == undefined) {
-			minmax = [0,100];
-		}
-		if (currentVar == "white_pct") {
-			minmax = [65,90];
-		}
-		if (currentVar == "black_pct") {
-			minmax = [3,23];
-		}
-		if (currentVar == "hisp_pct") {
-			minmax = [7,30];
-		}
-		if (currentVar == "asian_pct") {
-			minmax = [0,18];
-		}
-		if (currentVar == "noncitizen_pct") {
-			minmax = [2,20];
-		}
-		if (currentVar == "A_MEAN") {
-			minmax = [30000,120000];
-		}
+		const minmaxMap = {
+		    undefined: [0, 100],
+		    white_pct: [65, 90],
+		    black_pct: [3, 23],
+		    hisp_pct: [7, 30],
+		    asian_pct: [0, 18],
+		    noncitizen_pct: [2, 20],
+		    A_MEAN: [30000, 120000]
+		};
 
-	    // // Step 10: Move the first item with at least 6 dots to the front of maxIndicies
-		// let found = false;
-
-	    // // Check maxIndicies for an item with at least 4 dots
-		// for (let i = maxIndicies.length - 1; i >= 0; i--) {
-		// 	const index = maxIndicies[i];
-		// 	if (data[index].dots >= 6) {
-	    //         // Remove the found item from its current position
-		// 		maxIndicies.splice(i, 1);
-	    //         // Insert it at the front of the array
-		// 		maxIndicies.unshift(index);
-		// 		found = true;
-		// 		break;
-		// 	}
-		// }
-
-	    // // If no item in maxIndicies has at least 4 dots, find one in the entire sorted array
-		// if (!found) {
-		// 	for (let i = scoresWithIndices.length - 1; i >= 0; i--) {
-		// 		if (scoresWithIndices[i].dots >= 6) {
-		// 			const index = scoresWithIndices[i].index;
-	    //             // Insert it at the front of maxIndicies
-		// 			maxIndicies.unshift(index);
-	    //             // Remove the last item to maintain the number of intro jobs
-		// 			if (maxIndicies.length > numberOfIntroJobs) {
-		// 				maxIndicies.pop();
-		// 			}
-		// 			break;
-		// 		}
-		// 	}
-		// }
+		minmax = minmaxMap[currentVar] || [0, 100];
 	}
 
 	$: {
@@ -227,7 +179,7 @@
 	{/if}
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
-		<Canvas {bg} {x_axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:reset bind:explored/>
+		<Canvas {bg} {axis_flip} {x_axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:reset bind:explored/>
 		{#key axis_variable}
 		<Axis {currentStageNumber} {axis_flip} {axis_variable} {x_axis_variable} {x_axis_variable_range} />
 		{/key}
@@ -240,7 +192,7 @@
 	.container {
 		position: fixed;
 		width: calc(100% - 370px);
-		left: 370px;
+		right: 370px;
 		top: 0px;
 		height: 100vh;
 		background: var(--color-bg);

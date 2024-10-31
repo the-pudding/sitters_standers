@@ -5,24 +5,10 @@
 
 {#if currentStageNumber > 0 && axis_variable != -1}
 <div class="yaxis" transition:fade>
-	{#if axis_flip == 1}
-	<div class="top mobile">↑ Less {axis_variable}</div>
-	<div class="bottom mobile">↓ More {axis_variable}</div>
-	{:else}	
-	<div class="top mobile">↑ More {axis_variable}</div>
-	<div class="bottom mobile">↓ Less {axis_variable}</div>
-	{/if}
-
+	<div class="top">↑ More {axis_variable}</div>
+	<div class="bottom">↓ Less {axis_variable}</div>
 </div>
 {/if}
-
-
-<div class="xaxis">
-	<!-- {#if currentStageNumber > 1}
-	<div class="left mobile" transition:fade>← {x_axis_variable_range[x_axis_variable][2]}</div>
-	<div class="right mobile" transition:fade>{x_axis_variable_range[x_axis_variable][3]} →</div>
-	{/if} -->
-</div>
 
 
 <style>
@@ -51,7 +37,7 @@
 		top: 0px;
 		width: calc(100% - 10px);
 		pointer-events: none;
-		height: 98%;
+		height: 100%;
 		z-index: 100;
 		text-align: left;
 		user-select: none;
@@ -64,7 +50,7 @@
 	}
 	.yaxis .bottom {
 		position: absolute;
-		bottom: 10px;
+		bottom: 10px !important;
 		left:  0px;
 		text-align:  left;
 	}
@@ -73,7 +59,6 @@
 		position: absolute;
 		left: 5px;
 		bottom: 30px;
-/* 		border-bottom: 1px dotted var(--color-lessdark-purple); */
 		width: 100%;
 		height: 30px;
 		text-align: left;
@@ -84,11 +69,11 @@
 			opacity:  1;
 		}
 		.yaxis .bottom {
-			bottom:  45px;
+			bottom:  40px !important;
 		}
 		.yaxis .top {
 			top:  auto;
-			bottom: 55px;
+			bottom: 60px;
 		}
 		.yaxis, .xaxis {
 			font-size:  13px;

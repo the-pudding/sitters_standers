@@ -41,14 +41,9 @@
 		}
 	}
 	function toggleJobSearch() {
-		// jobSearchShown = !jobSearchShown;
 		if (jobSearchShown) {
 			shown = false;
 		}
-		// if (!jobSearchShown) {
-		// 	searchValue = "";
-		// 	query = "";
-		// }
 	}
 
 	function getMidpoint(n) {

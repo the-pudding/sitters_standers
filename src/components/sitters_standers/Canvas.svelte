@@ -2,7 +2,7 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar, reset;
+	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar, reset, axis_flip;
 	let prevStageNumber = currentStageNumber;
 	let circles = [];
 	let dotSize = 5; 
@@ -37,7 +37,9 @@
 	let stageSet = false;
 	const gridSize = 100; // Size of each grid cell
 	let grid = {}; // Spatial partitioning grid to track circle positions
+	let highlightedJobs = [];
 
+	
 
 	const sketch = (p) => {
 
@@ -79,230 +81,254 @@
 			}
 
 
-	        if (currentStageNumber != prevStageNumber || zoomedGuidedTour) {
-	        	userControl = false;
-	        	prevStageNumber = currentStageNumber;
-	        	if (no_hl_list.indexOf(currentVar) != -1) {
-	        		no_hl = true;
-	        	} else {
-	        		no_hl = false;
-	        	}
-	        }
-	       
-	        if (!userControl) {
-	        	setStage();
-	        }
-	        p.clear();
+			if (currentStageNumber != prevStageNumber || zoomedGuidedTour) {
+				userControl = false;
+				prevStageNumber = currentStageNumber;
+				if (no_hl_list.indexOf(currentVar) != -1) {
+					no_hl = true;
+				} else {
+					no_hl = false;
+				}
+				if (copy.story[currentStageNumber].job) {
+					highlightedJobs = copy.story[currentStageNumber].job.split("|");	
+				} else {
+					highlightedJobs = [];
+				}
+			}
+
+			if (!userControl) {
+				setStage();
+			}
+			p.clear();
 			p.smooth();
-	        p.background("#150317");
-	        clearGrid();
-	        p.push();
-	        p.translate(offsetX, offsetY);
-	        p.scale(zoom);
+			p.background("#150317");
 
-	        if (currentStageNumber != 0) {
-	        	p.stroke("#5c395c");
-	        	p.strokeWeight(0.5/zoom);
-	        	p.line(w/2,-h*3,w/2,h*3);
-	        	p.textSize(15/zoom);
-	        	p.fill(255,255,255);
-	        	p.textAlign(p.RIGHT);
-	        	p.textFont('Arial');
-	        	p.text("←",w/2 - (94/zoom), 23/zoom);
-	        	p.textAlign(p.LEFT);
-	        	p.text("→",w/2 + (106/zoom), 23/zoom);
-
-	        	p.textFont(atlasGrotesk);
-	        	p.textAlign(p.RIGHT);
-	        	p.text("Sitters",w/2 - (34/zoom), (23/zoom));
-	        	p.textAlign(p.LEFT);
-	        	p.text("Standers",w/2 + (30/zoom), (23/zoom));
-	        }
+			clearGrid();
+			p.push();
+			p.translate(offsetX, offsetY);
+			p.scale(zoom);
 
 
-	        for (let i = 0; i < circles.length; i++) {
-	        	if (checkDisplay(i) && data[i].score != -1) {
-	        		circles[i].updateGroup();
-	        		circles[i].update();
-	        		circles[i].display();
+			backgroundhl();
 
-	        		for (let j = 0; j < circles.length; j++) {
-	        			if (w > 860 || (Math.abs(circles[i].center.y - circles[i].target.y) < h/10 && Math.abs(circles[i].center.x - circles[i].target.x) < h/10)) {
-	        				if (j != i && data[j].score != -1 && data[i].score != -1) {
-	        					if (w > 860 || (Math.abs(circles[i].target.y - circles[j].target.y) < h/10 && Math.abs(circles[i].target.x - circles[j].target.x) < h/10) ) {
-	        						circles[i].collide(circles[j]);
-	        					}
-	        				}
-	        			}
-	        		}
-	        	}
-	        }
+			if (currentStageNumber != 0) {
+				p.stroke("#5c395c");
+				p.strokeWeight(0.5/zoom);
+				p.line(w/2,-h*3,w/2,h*3);
+				p.textSize(15/zoom);
+				p.fill(255,255,255);
+				p.textAlign(p.RIGHT);
+				p.textFont('Arial');
+				p.text("←",w/2 - (94/zoom), 23/zoom);
+				p.textAlign(p.LEFT);
+				p.text("→",w/2 + (106/zoom), 23/zoom);
 
-	        for (let i = 0; i < circles.length; i++) {
-	        	if (checkDisplay(i) && data[i].score != -1) {
-	        		circles[i].hovered = false;
+				p.textFont(atlasGrotesk);
+				p.textAlign(p.RIGHT);
+				p.text("Sitters",w/2 - (34/zoom), (23/zoom));
+				p.textAlign(p.LEFT);
+				p.text("Standers",w/2 + (30/zoom), (23/zoom));
+			}
+
+
+			for (let i = 0; i < circles.length; i++) {
+				if (checkDisplay(i) && data[i].score != -1) {
+					circles[i].updateGroup();
+					circles[i].update();
+					circles[i].display();
+
+					for (let j = 0; j < circles.length; j++) {
+						if (w > 860 || (Math.abs(circles[i].center.y - circles[i].target.y) < h/10 && Math.abs(circles[i].center.x - circles[i].target.x) < h/10)) {
+							if (j != i && data[j].score != -1 && data[i].score != -1) {
+								if (w > 860 || (Math.abs(circles[i].target.y - circles[j].target.y) < h/10 && Math.abs(circles[i].target.x - circles[j].target.x) < h/10) ) {
+									circles[i].collide(circles[j]);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			for (let i = 0; i < circles.length; i++) {
+				if (checkDisplay(i) && data[i].score != -1) {
+					circles[i].hovered = false;
 					// Adjust the mouse position to account for zoom and pan
-	        		let adjustedMouseX = (p.mouseX - offsetX) / zoom;
-	        		let adjustedMouseY = (p.mouseY - offsetY) / zoom;
+					let adjustedMouseX = (p.mouseX - offsetX) / zoom;
+					let adjustedMouseY = (p.mouseY - offsetY) / zoom;
 
 				    // Check hover using adjusted mouse position
-	        		if (p.dist(adjustedMouseX, adjustedMouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius / 2) {
-	        			circles[i].hovered = true;
-	        		}
-	        		circles[i].displayText(circles);
-	        	}
-	        }
+					if (p.dist(adjustedMouseX, adjustedMouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius / 2) {
+						circles[i].hovered = true;
+					}
+					circles[i].displayText(circles);
+				}
+			}
 
-	        if (currentVar != new_currentVar) {
-	        	prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
-	        	new_currentVar = currentVar;
-	        	stageSet = false;
-	        }
-	        p.pop();
-	    };
+			if (currentVar != new_currentVar) {
+				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
+				new_currentVar = currentVar;
+				stageSet = false;
+			}
+			p.pop();
+		};
 
-	    function checkDisplay(n) {
-	    	zoomedGuidedTour = true;
-	    	guidedTour = true;
-	    	stage = copy.story[currentStageNumber].stage;
-	    	if (stage == "explore" || stage == "preexplore") {
-	    		return true;
-	    	}
-	    	if (stage == "one_similar_job" && n == maxIndicies[0]) {
-	    		return true;
-	    	}
-	    	if (stage == "other_similar_jobs" && maxIndicies.includes(n)) {
-	    		return true;
-	    	}
-	    	if (stage == "other_similar_jobs_you" && (maxIndicies.includes(n) || n == data.length-1)) {
-	    		return true;
-	    	}
-	    	if (stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
-	    		return true;
-	    	}
+	    let alphaValue = [0, 0]; // Initial alpha values for background highlights
 
-	    	if (stage == "other_dissimilar_jobs_you" && (minIndicies.includes(n) || maxIndicies.includes(n) || n == data.length-1)) {
-	    		return true;
-	    	}
+		function adjustAlpha(index, increment) {
+		    alphaValue[index] += increment ? 5 : -5;
+		    alphaValue[index] = p.constrain(alphaValue[index], 0, 255); // Keep alpha within 0-255
+		}
 
-	    	if (stage == "all_jobs_zoomout") {
-	    		zoomedGuidedTour = false;
-	    		return true;
-	    	}
-	    	if (stage == "all_jobs_hl") {
-	    		zoomedGuidedTour = false;
-	    		return true;
-	    	}
-	    	if (stage == "all_jobs") {
-	    		zoomedGuidedTour = false;
-	    		return true;
-	    	}
-	    	if (stage == "explore") {
-	    		guidedTour = false;
-	    		return true;
-	    	}
+		function backgroundhl() {
+		    const bgType = copy.story[currentStageNumber].bg;
+		    
+		    // Adjust alpha for "sit" background
+		    adjustAlpha(0, bgType === "sit");
+		    if (bgType === "sit") {
+		        p.fill(p.color(51, 9, 48, alphaValue[0]));
+		        p.rect(w / 2, -h * 2, -w * 4, h * 4);
+		    }
 
-	    	return false;
-	    }
+		    // Adjust alpha for "stand" background
+		    adjustAlpha(1, bgType === "stand");
+		    if (bgType === "stand") {
+		        p.fill(p.color(51, 9, 48, alphaValue[1]));
+		        p.rect(w / 2, -h * 2, w * 4, h * 4);
+		    }
+		}
 
-	    function setStage() {
-	    	if (copy.story[currentStageNumber].stage == "explore") {
-	    		if (!stageSet) {
-	    			if (w < 860) {
-	    				centerAndZoomOnCoordinate(w/2, h/2-h/20, 0.85, 1);
-	    			} else {
-	    				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
-	    			}
-	    			stageSet = true;
-	    		}
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "preexplore") {
-	    		if (!stageSet) {
-	    			if (w < 860) {
-	    				centerAndZoomOnCoordinate(w/2, h/2-h/20, 0.85, 1);
-	    			} else {
-	    				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
-	    			}
-	    			stageSet = true;
-	    		}
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "one_similar_job") {
-	    		centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 6, 0.8);
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "other_similar_jobs") {
-	    		centerAndZoomOnCoordinate(w/2, h/2, 0.9);
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs") {
-	    		centerAndZoomOnCoordinate(w/2, h/2, 0.9);
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "all_jobs_zoomout") {
-	    		centerAndZoomOnCoordinate(w/2, h/2, 0.95);
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "all_jobs_hl") {
-	    		centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 0.95);
-	    	}
-	    	if (copy.story[currentStageNumber].stage == "all_jobs") {
-	    		let nudge = 0;
-	    		if (w > 840) {
-	    			nudge = w/50;
-	    		}
-	    		centerAndZoomOnCoordinate(w/2 + nudge, h/2, 0.95);
-	    	}
-	    }
+		function checkDisplay(n) {
+			zoomedGuidedTour = true;
+			guidedTour = true;
+			stage = copy.story[currentStageNumber].stage;
+			if (stage == "explore" || stage == "preexplore") {
+				return true;
+			}
+			if (stage == "one_similar_job" && n == maxIndicies[0]) {
+				return true;
+			}
+			if (stage == "other_similar_jobs" && maxIndicies.includes(n)) {
+				return true;
+			}
+			if (stage == "other_similar_jobs_you" && (maxIndicies.includes(n) || n == data.length-1)) {
+				return true;
+			}
+			if (stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
+				return true;
+			}
 
-	    function centerAndZoomOnCoordinate(targetX, targetY, targetZoom, speed) {
+			if (stage == "other_dissimilar_jobs_you" && (minIndicies.includes(n) || maxIndicies.includes(n) || n == data.length-1)) {
+				return true;
+			}
+
+			if (stage == "all_jobs_zoomout") {
+				zoomedGuidedTour = false;
+				return true;
+			}
+			if (stage == "all_jobs_hl") {
+				zoomedGuidedTour = false;
+				return true;
+			}
+			if (stage == "all_jobs") {
+				zoomedGuidedTour = false;
+				return true;
+			}
+			if (stage == "explore") {
+				guidedTour = false;
+				return true;
+			}
+
+			return false;
+		}
+
+		function setStage() {
+			if (copy.story[currentStageNumber].stage == "explore") {
+				if (!stageSet) {
+					if (w < 860) {
+						centerAndZoomOnCoordinate(w/2, h/2-h/20, 0.85, 1);
+					} else {
+						centerAndZoomOnCoordinate(w/2, h/2, 0.9);
+					}
+					stageSet = true;
+				}
+			}
+			if (copy.story[currentStageNumber].stage == "preexplore") {
+				if (!stageSet) {
+					if (w < 860) {
+						centerAndZoomOnCoordinate(w/2, h/2-h/20, 0.85, 1);
+					} else {
+						centerAndZoomOnCoordinate(w/2, h/2, 0.9);
+					}
+					stageSet = true;
+				}
+			}
+			if (copy.story[currentStageNumber].stage == "one_similar_job") {
+				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 6, 0.8);
+			}
+			if (copy.story[currentStageNumber].stage == "other_similar_jobs") {
+				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
+			}
+			if (copy.story[currentStageNumber].stage == "other_dissimilar_jobs") {
+				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_zoomout") {
+				centerAndZoomOnCoordinate(w/2, h/2, 0.95);
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs_hl") {
+				centerAndZoomOnCoordinate(circles[job_hl_index].center.x, circles[job_hl_index].center.y, 0.95);
+			}
+			if (copy.story[currentStageNumber].stage == "all_jobs") {
+				let nudge = 0;
+				if (w > 840) {
+					nudge = w/50;
+				}
+				centerAndZoomOnCoordinate(w/2 + nudge, h/2, 0.95);
+			}
+		}
+
+		function centerAndZoomOnCoordinate(targetX, targetY, targetZoom, speed) {
 		    // Set the zoom level to the target zoom
-	    	zoomTarget = targetZoom;
+			zoomTarget = targetZoom;
 
 		    // // Calculate the offset to center the target coordinate on the canvas
-	    	offsetXTarget = p.width / 2 - targetX * zoomTarget;
-	    	offsetYTarget = p.height / 2 - targetY * zoomTarget;
-	    	let lerpSpeed = 0.05;
-	    	if (speed != undefined) {
-	    		lerpSpeed = speed;
-	    	}
-	    	maxSpeed = 8;
-	    	maxForce = 5;
-	    	if (currentStageNumber == 0) {
-	    		lerpSpeed = 0.1;
-	    		maxSpeed = 15;
-	    		maxForce = 10;
-	    	} else if (zoomedGuidedTour || userControl) {
-	    		lerpSpeed = 0.1;
-	    		maxSpeed = 7;
-	    		maxForce = 4;
-	    	} 
-	    	if (speed == 1) {
-	    		zoom = zoomTarget;
-	    		offsetX = offsetXTarget; 
-	    		offsetY = offsetYTarget;
-	    	} else {
-	    		zoom = p.lerp(zoom, zoomTarget, lerpSpeed);
-	    		offsetX = p.lerp(offsetX, offsetXTarget, lerpSpeed);
-	    		offsetY = p.lerp(offsetY, offsetYTarget, lerpSpeed);
-	    	}
-	    }
+			offsetXTarget = p.width / 2 - targetX * zoomTarget;
+			offsetYTarget = p.height / 2 - targetY * zoomTarget;
+			let lerpSpeed = 0.05;
+			if (speed != undefined) {
+				lerpSpeed = speed;
+			}
+			maxSpeed = 8;
+			maxForce = 5;
+			if (currentStageNumber == 0) {
+				lerpSpeed = 0.1;
+				maxSpeed = 15;
+				maxForce = 10;
+			} else if (zoomedGuidedTour || userControl) {
+				lerpSpeed = 0.1;
+				maxSpeed = 7;
+				maxForce = 4;
+			} 
+			if (speed == 1) {
+				zoom = zoomTarget;
+				offsetX = offsetXTarget; 
+				offsetY = offsetYTarget;
+			} else {
+				zoom = p.lerp(zoom, zoomTarget, lerpSpeed);
+				offsetX = p.lerp(offsetX, offsetXTarget, lerpSpeed);
+				offsetY = p.lerp(offsetY, offsetYTarget, lerpSpeed);
+			}
+		}
 
 		// Function to check if mouse is over the p5.js canvas
-	    function isMouseOverCanvas() {
+		function isMouseOverCanvas() {
 		    // Get the element under the mouse
-	    	let element = document.elementFromPoint(p.mouseX + p.canvas.offsetLeft, p.mouseY + p.canvas.offsetTop);
+			let element = document.elementFromPoint(p.mouseX + p.canvas.offsetLeft, p.mouseY + p.canvas.offsetTop);
 		    // Return true if the element is the p5.js canvas
-	    	return element === p.canvas;
-	    }
-
-		// Function to constrain offset values within the visible canvas bounds
-	    function constrainOffsets() {
-	    	const maxOffsetX = (w * zoom) / 1.5;
-	    	const maxOffsetY = (h * zoom) / 1.5;
-
-		    // Clamp offsetX and offsetY to prevent moving outside the canvas
-	    	offsetX = p.constrain(offsetX, -maxOffsetX, maxOffsetX);
-	    	offsetY = p.constrain(offsetY, -maxOffsetY, maxOffsetY);
-	    }
+			return element === p.canvas;
+		}
 
 		// Handle zooming with mouse wheel
-	    p.mouseWheel = (event) => {
+		p.mouseWheel = (event) => {
 		    if (!isMouseOverCanvas()) return; // Prevent zooming if not over the canvas
 		    userControl = true;
 		    explored = true;
@@ -325,9 +351,6 @@
 		    // Focus zoom on mouse position
 		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
 		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
-
-		    // Constrain offsets so you can't pan outside the canvas
-		    constrainOffsets();
 		};
 
 		// Handle panning with mouse drag
@@ -345,9 +368,6 @@
 		    
 		    offsetX = p.mouseX - startX;
 		    offsetY = p.mouseY - startY;
-
-		    // Constrain offsets so you can't pan outside the canvas
-		    constrainOffsets();
 		};
 
 		let pinchZooming = false;
@@ -403,9 +423,6 @@
 		    	previousDistance = currentDistance;
 		    	pinchZooming = true;
 		    }
-
-		    // Constrain offsets so you can't pan outside the canvas
-		    constrainOffsets();
 
 		    return false; // Prevent default behavior (like scrolling the page)
 		};
@@ -597,8 +614,14 @@
 
 			    // Calculate the main target position
 				let targetY = w > 860
-				? p.map(data[this.index].score, minmax[0], minmax[1], h - 30, marginTop)
-				: p.map(data[this.index].score, minmax[0], minmax[1], h - 30, marginTop);
+				? p.map(data[this.index].score, minmax[0], minmax[1], h - 50, marginTop)
+				: p.map(data[this.index].score, minmax[0], minmax[1], h - 50, marginTop);
+
+				if (axis_flip) {
+					targetY = w > 860
+					? p.map(data[this.index].score, minmax[0], minmax[1], marginTop, h - 50)
+					: p.map(data[this.index].score, minmax[0], minmax[1], marginTop, h - 50);
+				}
 
 				this.target.y = p.constrain(targetY, marginTop, h);
 				this.target.x = p.constrain(
@@ -737,7 +760,7 @@
 					p.strokeWeight(0.4 / zoom);
 				}
 
-				if (searchValue == this.obj.OCCUPATION) {
+				if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
 					job_hl_index = this.index;
 					p.stroke("#ffffff");
 					p.strokeWeight(1 / zoom);
@@ -749,9 +772,9 @@
 					p.strokeWeight(1 / zoom);
 					p.circle(this.center.x, this.center.y, 10);
 				} else if (data[this.index].score != -1) {
-					if (searchValue == this.obj.OCCUPATION) {
+					if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
 						p.stroke(252, 186, 3);
-						p.strokeWeight(2 / zoom);
+						p.strokeWeight(1.5 / zoom);
 					}
 					p.circle(this.center.x, this.center.y, this.radius);	
 			        const transitionSpeed = 0.3; // Smooth transition speed
@@ -841,11 +864,14 @@
 			    }
 
 			    // Determine shouldDisplayText based on prioritization rules, with searchValue and hovered conditions
-			    let shouldDisplayText = this.hovered || 
-			    (searchValue !== "" ? (searchValue === this.obj.OCCUPATION) 
-			    	: (prioritizeVarPct && 
-			    		((this.radius > 20 && !this.checkTextOverlap(otherCircles)) || 
-			    			(!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour)))));
+			    let shouldDisplayText = 
+				    this.hovered || 
+				    (searchValue !== "" && searchValue === this.obj.OCCUPATION) || 
+				    highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1 || 
+				    (prioritizeVarPct && (
+				        (this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
+				        (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
+				    ));
 
 
 			    const textWidth = p.textWidth(this.obj.OCC_SHORT);
@@ -856,7 +882,7 @@
 			    }
 
 			    // Always highlight "You"
-			    if (this.obj.OCCUPATION === "You" || this.hovered || searchValue === this.obj.OCCUPATION) {
+			    if (this.obj.OCCUPATION === "You" || this.hovered || searchValue === this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
 			    	shouldDisplayText = true;
 			    }
 
@@ -870,7 +896,7 @@
 			    // Only draw text if it's at least partially visible
 			    if (this.alpha > 0) {
 			        // Set the fill color with current alpha for fading effect
-			    	if (this.obj.OCCUPATION === "You" || searchValue === this.obj.OCCUPATION) {
+			    	if (this.obj.OCCUPATION === "You" || searchValue === this.obj.OCCUPATION ||  highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
 			    		p.fill(252, 186, 3, this.alpha);
 			    	} else {
 			    		p.fill(191, 172, 201, this.alpha);
@@ -892,7 +918,7 @@
 			        p.strokeWeight(4 / zoom);
 
 			        // Display text based on searchValue condition
-			        if (searchValue === "" || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1)) {
+			        if (searchValue === "" || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
 			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        }
 
