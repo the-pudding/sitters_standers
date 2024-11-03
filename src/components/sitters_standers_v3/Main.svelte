@@ -1,12 +1,12 @@
 <script>
-	import { onMount } from 'svelte';
-	import Canvas from "$components/sitters_standers/Canvas.svelte"; 
+	import Canvas from "$components/sitters_standers_v3/Canvas.svelte"; 
 	import { fade } from 'svelte/transition';
-	import Pulldown from "$components/sitters_standers/Pulldown.svelte"; 
-	import Text from "$components/sitters_standers/Text.svelte"; 
-	import Axis from "$components/sitters_standers/Axis.svelte"; 
-	import Intro from "$components/sitters_standers/Intro.svelte";
-	export let copy, data, headervars;
+	import Pulldown from "$components/sitters_standers_v3/Pulldown.svelte"; 
+	import Text from "$components/sitters_standers_v3/Text.svelte"; 
+	import Axis from "$components/sitters_standers_v3/Axis.svelte"; 
+	import Intro from "$components/sitters_standers_v3/Intro.svelte"; 
+	export let copy;
+	export let data;
 	export let currentQuestionNum = 0;
 	export let currentStageNumber;
 	export let x_axis_variable;
@@ -19,7 +19,6 @@
 	let explored = false;
 	let bg;
 	let reset = false;
-	let prefersReducedMotion = false;
 	
 	let x_axis_variable_range = {
 		"A_MEAN": [30000,110000, "Less money","More money"],
@@ -50,38 +49,7 @@
 
 	data = data.sort((a, b) => b.TOT_EMP - a.TOT_EMP);
 	let you = {"OCCUPATION": "You", "OCC_SHORT": "You", "A_MEAN": selectedSalary, "PCT_STAND": selectedStandingPct };
-	let sitter = {"OCCUPATION": "Sitter avg.", "OCC_SHORT": "Sitter avg." };
-	let stander = {"OCCUPATION": "Stander avg.", "OCC_SHORT": "Stander avg." };
-	weightedAverage();
-
-	function weightedAverage() {
-		headervars.headers.forEach(hed => {
-			sitter[hed] = -1;
-			stander[hed] = -1;
-			let weightedAverage = {"sitter": [0,0], "stander": [0,0]};
-			data.forEach(item => {
-				const val = hed in item && item[hed] && item[x_axis_variable]
-				? Number(item[hed].toString().replace(/[^0-9.]/g, '')) || -1
-				: -1;
-				if (val != -1) {
-					if (item[x_axis_variable] > 50) {
-						weightedAverage.sitter[0] += item.TOT_EMP*val;
-						weightedAverage.sitter[1] += item.TOT_EMP;
-					}
-					if (item[x_axis_variable] <= 50) {
-						weightedAverage.stander[0] += item.TOT_EMP*val;
-						weightedAverage.stander[1] += item.TOT_EMP;
-					}
-					
-				}
-			})
-			sitter[hed] = weightedAverage.sitter[1] ? (weightedAverage.sitter[0] / weightedAverage.sitter[1]) : 0;
-			stander[hed] = weightedAverage.stander[1] ? (weightedAverage.stander[0] / weightedAverage.stander[1]) : 0;
-		})
-		data.push(sitter);
-		data.push(stander);
-		data.push(you);
-	}
+	data.push(you);
 
 	function handleUpdateQuestion(event, num) {
 		currentStageNumber = currentStageNumber + event.detail.answer; // answer is 1 for forward, -1 for backward 
@@ -119,33 +87,27 @@
 		let nudgeDirection = 1, nudgeAmount = 0;
 
 		data.forEach((item, i) => {
-			item.score = 0;
+		    item.score = 0;
 
-			if (copy.story[currentStageNumber].hl === undefined) {
-				if (prefersReducedMotion) {
-					item.score = 50 + (nudgeDirection * nudgeAmount);
-					nudgeDirection *= -1;
-					nudgeAmount += 0.05;
-				} else {
-					item.score = 50 + (nudgeDirection * nudgeAmount);
-					nudgeDirection *= -1;
-					nudgeAmount += 0.01;
-				}
-			} else {
-				const value = currentVar in item && item[currentVar] && item[x_axis_variable]
-				? Number(item[currentVar].toString().replace(/[^0-9.]/g, '')) || -1
-				: -1;
-				item.score += value;
-			}
+		    if (copy.story[currentStageNumber].hl === undefined) {
+		        item.score = 50 + (nudgeDirection * nudgeAmount);
+		        nudgeDirection *= -1;
+		        nudgeAmount += 0.01;
+		    } else {
+		        const value = currentVar in item && item[currentVar] && item[x_axis_variable]
+		            ? Number(item[currentVar].toString().replace(/[^0-9.]/g, '')) || -1
+		            : -1;
+		        item.score += value;
+		    }
 
-			scoresWithIndices.push({
-				job: item.OCCUPATION,
-				index: i,
-				n: item.n,
-				score: item.score,
-				dots: item.dots,
-				value: item[x_axis_variable]
-			});
+		    scoresWithIndices.push({
+		        job: item.OCCUPATION,
+		        index: i,
+		        n: item.n,
+		        score: item.score,
+		        dots: item.dots,
+		        value: item[x_axis_variable]
+		    });
 		});
 		
 	    // Sort to figure out the top X and bottom X
@@ -157,11 +119,11 @@
 		maxIndicies = filteredScores.slice(-numberOfIntroJobs).map(item => item.index);
 
 		[scoresWithIndices.find(item => item.n === 157)?.index].forEach(index => {
-			if (index !== undefined) maxIndicies.unshift(index);
+		    if (index !== undefined) maxIndicies.unshift(index);
 		});
 
 		[scoresWithIndices.find(item => item.n === 44)?.index].forEach(index => {
-			if (index !== undefined) minIndicies.unshift(index);
+		    if (index !== undefined) minIndicies.unshift(index);
 		});
 
 		// Get min and max
@@ -174,37 +136,18 @@
 		minmax[1] = maxAvg;
 
 		const minmaxMap = {
-			undefined: [0, 100],
-			white_pct: [65, 90],
-			black_pct: [3, 23],
-			hisp_pct: [7, 30],
-			asian_pct: [0, 18],
-			noncitizen_pct: [2, 20],
-			nonwhite_pct: [10,50],
-			A_MEAN: [30000, 120000]
+		    undefined: [0, 100],
+		    white_pct: [65, 90],
+		    black_pct: [3, 23],
+		    hisp_pct: [7, 30],
+		    asian_pct: [0, 18],
+		    noncitizen_pct: [2, 20],
+		    nonwhite_pct: [10,50],
+		    A_MEAN: [30000, 120000]
 		};
 
-		minmax = minmaxMap[currentVar] || [minAvg, maxAvg];
+		minmax = minmaxMap[currentVar] || [0, 100];
 	}
-
-	onMount(() => {
-		const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-		function updatePreference(e) {
-			prefersReducedMotion = e.matches;
-		}
-
-        // Add listener
-		mediaQuery.addListener(updatePreference);
-
-        // Set initial value
-		prefersReducedMotion = mediaQuery.matches;
-
-        // Cleanup function
-		return () => {
-			mediaQuery.removeListener(updatePreference);
-		};
-	});
 
 	$: {
 		if (currentIntroActive != introActive || selectedIndices != prevSelectedIndices || currentVar != prevVar) {
@@ -237,7 +180,7 @@
 	{/if}
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
-		<Canvas {prefersReducedMotion} {bg} {axis_flip} {x_axis_variable} {axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:reset bind:explored/>
+		<Canvas {bg} {axis_flip} {x_axis_variable} {axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} bind:reset bind:explored/>
 		<!-- {#key axis_variable}
 		<Axis {currentStageNumber} {axis_flip} {axis_variable} {x_axis_variable} {x_axis_variable_range} />
 		{/key} -->

@@ -5,6 +5,7 @@
 	// import Footer from "$components/Footer.svelte";
 
 	const copy = getContext("copy");
+	import headervars from "$data/headervars.json";
 	let x_axis_variable = "PCT_STAND";
 	let introActive = true;
 	let currentStageNumber = 0;
@@ -21,4 +22,4 @@
 </script>
 
 <Header {currentStageNumber} {introActive}/>
-<Sitters_Standers {copy} data={filteredData} {x_axis_variable} bind:introActive bind:currentStageNumber />
+<Sitters_Standers {headervars} {copy} data={filteredData} {x_axis_variable} bind:introActive bind:currentStageNumber />

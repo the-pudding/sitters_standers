@@ -29,6 +29,7 @@
 	--color-light-purple: #947594;
 	--color-lighter-purple: #efb9f0;
 	--color-bright-purple: #ff69f2;
+	--color-bright-yellow: #eba800;
 
 	--color-fg: var(--color-gray-900);
 	--color-primary: var(--color-black);
@@ -283,7 +284,7 @@ select, button, input {
 	line-height: 21px;
 }
 .text span {
-	color: var(--color-bright-purple);
+	color: var(--color-bright-yellow);
 }
 .text span.you {
 	color: rgb(252, 186, 3);
