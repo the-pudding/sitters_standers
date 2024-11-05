@@ -21,6 +21,7 @@
 	let selectedSalaryIndex = null;
 	let selectedStandingIndex = null;
 	let nodatashown = false;
+	let isNextDisabled = false;
 	
 
 	const questionOrder = ["intro","stand_sit","body","other","salary"];
@@ -62,21 +63,25 @@
     }
 
     function addSalary(salary, index) {
-    	if (selectedSalaryIndex === index) {
-            selectedSalaryIndex = null; // Deselect if the same button is clicked again
-        } else {
-            selectedSalaryIndex = index; // Set the new selected index
-        }
-        selectedSalary = getMidpoint(salary);
+    	if (selectedSalaryIndex !== index) {
+	        selectedSalaryIndex = index; // Set the new selected index
+	        selectedSalary = salary === "Prefer not to answer" ? -1 : getMidpoint(salary);
+    	}
     }
 
     function addStanding(hours, index) {
-    	if (selectedStandingIndex === index) {
-            selectedStandingIndex = null; // Deselect if the same button is clicked again
-        } else {
-            selectedStandingIndex = index; // Set the new selected index
-        }
-        selectedStandingPct = getMidpoint(hours);
+	    // Only set the selection if it's not currently selected
+	    if (selectedStandingIndex !== index) {
+	        selectedStandingIndex = index; // Set the new selected index
+	        selectedStandingPct = hours === "I don't work" ? -1 : getMidpoint(hours);
+	    }
+	}
+
+    function skipQuestions() {
+    	selectedStandingPct = -1;
+    	selectedSalary = -1;
+    	introActive = false;
+    	shown = false;	
     }
 
 
@@ -101,6 +106,9 @@
     }
 
     function buttonClicked() {
+    	if (selectedStandingPct == -1 && questionNumber == 1) {
+    		skipQuestions();
+    	} 
     	flyValue = 200;
     	if (questionNumber == questionOrder.length - 1) {
     		introActive = false;
@@ -109,14 +117,22 @@
     	questionNumber += 1;
     }
 
-	// Handle key events for navigation
-    function handleKeydown(event) {
-    	if (event.key === 'ArrowRight') {
-    		buttonClicked();
-    	} else if (event.key === 'ArrowLeft') {
-    		buttonBack();
-    	}
-    }
+	function handleKeydown(event) {
+	    // Check if the "Next" action should be disabled based on question number and selection status
+	    if ((questionNumber === 1 && selectedStandingPct === undefined) || (questionNumber === 4 && selectedSalary === undefined))  {
+	    	isNextDisabled = true;
+	    } 
+
+	    if (isNextDisabled && event.key === 'ArrowRight') {
+	        return; // Prevent advancing if the "Next" action should be disabled
+	    }
+
+	    if (event.key === 'ArrowRight') {
+	        buttonClicked();
+	    } else if (event.key === 'ArrowLeft') {
+	        buttonBack();
+	    }
+	}
 
 	// Add and remove event listeners when component mounts and unmounts
     onMount(() => {
@@ -132,6 +148,9 @@
     	}
     });
     $: {
+    	isNextDisabled = 
+        (questionNumber === 1 && selectedStandingPct === undefined) || 
+        (questionNumber === 4 && selectedSalary === undefined);
     	selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
     	if (searchValue == "") {
     		nodatashown = false;
@@ -165,13 +184,13 @@
 					<img src="assets/app/Lead.gif" alt="animation of left person washing clothes, right person typing" />
 				</div>
 				{:else if questionOrder[questionNumber] == "salary"}
-				{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+"] as salary, index}
+				{#each ["$0 to $30,000","$30,000 to $60,000","$60,000 to $90,000","$90,000 to $120,000","$120,000 to $150,000","$150,000+","Prefer not to answer"] as salary, index}
 				<button class="answerItem {selectedSalaryIndex === index ? 'selected' : ''}" on:click={() => addSalary(salary, index)}>
 					{@html salary}
 				</button>
 				{/each}
 				{:else if questionOrder[questionNumber] == "stand_sit"}
-				{#each ["0 to 20%","20 to 40%","40 to 60%","60 to 80%","80 to 100%"] as hours, index}
+				{#each ["0 to 20%","20 to 40%","40 to 60%","60 to 80%","80 to 100%","I don't work"] as hours, index}
 				<button class="answerItem {selectedStandingIndex === index ? 'selected' : ''}" on:click={() => addStanding(hours, index)}>
 					{@html hours}
 				</button>
@@ -193,7 +212,16 @@
 				{#if questionOrder[questionNumber] != "intro"}
 				<button class="answerButton" on:click={buttonBack}><span>←</span> Back</button>
 				{/if}
+				{#if questionOrder[questionNumber] != "intro"}
+				<button 
+                  class="answerButton" 
+                  on:click={buttonClicked} 
+                  disabled={isNextDisabled}>
+                  {@html buttonOrder[questionNumber]}
+                </button>
+				{:else}
 				<button class="answerButton" on:click={buttonClicked}>{@html buttonOrder[questionNumber]}</button>
+				{/if}
 			</div>
 			{/if}
 		</div>
@@ -319,8 +347,8 @@
 		border: none;
 	}
 	.textContainer {
-		max-width: 320px;
-		width: 100%;
+		max-width: 95%;
+		width: 380px;
 		height: 420px;
 		text-align: center;
 		position: relative;
@@ -360,17 +388,12 @@
 	}
 
 	.toolbutton {
-/* 		background: var(--color-light-purple); */
-/* 		color: var(--color-off-purple); */
 		position: fixed;
-/* 		background: var(--color-dark-purple); */
 		border: 1px solid #473847;
 		cursor: pointer;
-/* 		font-size: 13px; */
 		z-index: 10001;
 		width: 140px;
 		text-align: center;
-/* 		border-radius: 0px; */
 		user-select: none;
 	}
 	.toolbutton.selected {
@@ -382,71 +405,70 @@
 		top: 220px;
 	}
 	.toolbutton:hover {
-/* 		color: white; */
 		z-index: 99999;
 	}
-	@media (width <= 800px) {
-		.toolbutton {
-			display: none;
-		}
-		.toolbutton.hideShow {
-			left:  auto;
-			right: 20px;
-			top: 20px;
-		}
-		.toolbutton.jobSearch {
-			left:  auto;
-			right: 20px;
-			top: 20px;
-		}
-		.panel {
-			right:  auto;
-			left: 50%;
-			transform:  translateX(-50%);
-			width:  90%;
-			top: 15px;
-		}
+@media (width <= 800px) {
+	.toolbutton {
+		display: none;
 	}
+	.toolbutton.hideShow {
+		left:  auto;
+		right: 20px;
+		top: 20px;
+	}
+	.toolbutton.jobSearch {
+		left:  auto;
+		right: 20px;
+		top: 20px;
+	}
+	.panel {
+		right:  auto;
+		left: 50%;
+		transform:  translateX(-50%);
+		width:  90%;
+		top: 15px;
+	}
+}
 
-	.dotContainer {
-		width: 100%;
-		text-align: center;
-	}
-	.dot {
-		display: inline-block;
-		width: 9px;
-		height: 9px;
-		margin: 0 4px;
-		border-radius: 50%;
-		background: var(--color-light-purple);
-		opacity: 0.4;
-		transition: all 200ms cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
-		transition-timing-function: cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
-	}
-	.dot.selected {
-		background: var(--color-bright-purple);
-		opacity: 1;
-	}
-	.nodata {
-		position: absolute;
-		right: 10px;
-		top: calc(100% + 10px);
-		font-size: 14px;
-		color: rgb(252, 186, 3);
-	}
-	.introImage {
-		width: 320px;
-		height: 200px;
-		display: block;
-		font-size: 9px;
-		position: relative;
+.dotContainer {
+	width: 100%;
+	text-align: center;
+}
+.dot {
+	display: inline-block;
+	width: 9px;
+	height: 9px;
+	margin: 0 4px;
+	border-radius: 50%;
+	background: var(--color-light-purple);
+	opacity: 0.4;
+	transition: all 200ms cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
+	transition-timing-function: cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
+}
+.dot.selected {
+	background: var(--color-bright-purple);
+	opacity: 1;
+}
+.nodata {
+	position: absolute;
+	right: 10px;
+	top: calc(100% + 10px);
+	font-size: 14px;
+	color: rgb(252, 186, 3);
+}
+.introImage {
+	width: 320px;
+	height: 200px;
+	display: block;
+	font-size: 9px;
+	position: relative;
 /* 		background:  black; */
 /* 		background: var(--color-dark-purple); */
-	}
-	.introImage img {
-		position: absolute;
-		top:  -50px;
-		left:  5%;
-		width:  95%;
-	}
+}
+.introImage img {
+	position: absolute;
+	top:  -50px;
+	left:  5%;
+	width:  95%;
+}
 </style>

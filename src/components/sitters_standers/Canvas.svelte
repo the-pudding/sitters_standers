@@ -2,7 +2,7 @@
 	import P5 from 'p5-svelte';
 	let w = 55;
 	let h = 55;
-	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar, reset, axis_flip, axis_variable, prefersReducedMotion;
+	export let bg, data, currentData, questions, copy, currentQuestionNum, currentStageNumber, minmax, minIndicies, maxIndicies, searchValue, explored, x_axis_variable, x_axis_variable_range, currentVar, reset, axis_flip, axis_variable, prefersReducedMotion, showAverageStage;
 	let prevStageNumber = currentStageNumber;
 	let circles = [];
 	let dotSize = 6; 
@@ -15,7 +15,7 @@
 	let userControl = false;
 	let zoom = 4;       // Zoom level
 	let zoomTarget = 4;
-	let zoomMinMax = [0.5, 8];
+	let zoomMinMax = [0.5, 10];
 	let offsetX = 0;    // X offset for panning
 	let offsetXTarget = 0;
 	let offsetY = 0;    // Y offset for panning
@@ -45,7 +45,10 @@
 	const standerNum = 8;
 	const sitterNum = 8;
 
+
 	const sketch = (p) => {
+		let hlYellow = p.color(241, 82, 255);
+		let labelPurple = p.color(189, 165, 196);
 
 		p.preload = () => {
 			atlasGrotesk = p.loadFont('assets/app/AtlasGrotesk-Regular-Web.otf'); // TiemposTextWeb-Regular.otf
@@ -90,7 +93,7 @@
 				reset = false;
 			}
 
-
+			hlYellow.setAlpha(255);
 			if (currentStageNumber != prevStageNumber || zoomedGuidedTour) {
 				bgType = copy.story[currentStageNumber].bg;
 				userControl = false;
@@ -101,7 +104,7 @@
 					no_hl = false;
 				}
 				if (copy.story[currentStageNumber].job) {
-					highlightedJobs = copy.story[currentStageNumber].job.split("|");	
+					highlightedJobs = copy.story[currentStageNumber].job.split("|").concat(["Sitter avg.", "Stander avg."]);
 				} else {
 					highlightedJobs = [];
 				}
@@ -111,7 +114,7 @@
 				setStage();
 			}
 			p.clear();
-			p.smooth();
+			p.noSmooth();
 			p.background("#150317");
 
 			clearGrid();
@@ -119,29 +122,38 @@
 			p.translate(offsetX, offsetY);
 			p.scale(zoom);
 
-			backgroundhl();
+			// backgroundhl();
 			axisLines();
+			averageLine();
 			for (let i = 0; i < circles.length; i++) {
-				if (checkDisplay(i) && data[i].score != -1) {
-					circles[i].updateGroup();
-					circles[i].update();
-					circles[i].display();
-					if (!prefersReducedMotion) {
-						if (circles[i].obj.OCCUPATION != "Sitter avg." || circles[i].obj.OCCUPATION != "Stander avg.") {
-							for (let j = 0; j < circles.length; j++) {
-								if (w > 860 || (Math.abs(circles[i].center.y - circles[i].target.y) < h/10 && Math.abs(circles[i].center.x - circles[i].target.x) < h/10)) {
-									if (j != i && data[j].score != -1 && data[i].score != -1) {
-										if (w > 860 || (Math.abs(circles[i].target.y - circles[j].target.y) < h/10 && Math.abs(circles[i].target.x - circles[j].target.x) < h/10) ) {
-											circles[i].collide(circles[j]);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			    if (!checkDisplay(i) || data[i].score === -1) continue;
 
+			    circles[i].updateGroup();
+			    circles[i].update();
+			    circles[i].display();
+
+			    if (prefersReducedMotion || ["Sitter avg.", "Stander avg."].includes(circles[i].obj.OCCUPATION)) continue;
+
+			    const withinViewport = w > 860 || (
+			        Math.abs(circles[i].center.y - circles[i].target.y) < h / 10 &&
+			        Math.abs(circles[i].center.x - circles[i].target.x) < h / 10
+			    );
+
+			    if (!withinViewport) continue;
+
+			    for (let j = 0; j < circles.length; j++) {
+			        if (j === i || data[j].score === -1) continue;
+
+			        const withinTargetRange = w > 860 || (
+			            Math.abs(circles[i].target.y - circles[j].target.y) < h / 10 &&
+			            Math.abs(circles[i].target.x - circles[j].target.x) < h / 10
+			        );
+
+			        if (withinTargetRange) {
+			            circles[i].collide(circles[j]);
+			        }
+			    }
+			}
 			for (let i = 0; i < circles.length; i++) {
 				if (checkDisplay(i) && data[i].score != -1) {
 					circles[i].hovered = false;
@@ -162,19 +174,25 @@
 				new_currentVar = currentVar;
 				stageSet = false;
 			}
-			if (currentStageNumber > 3) {
-				p.stroke(255, 0, 251,160);
-				p.strokeWeight(0.8/zoom);
-				p.line(circles[circles.length-2].center.x,circles[circles.length-2].center.y,circles[circles.length-3].center.x, circles[circles.length-3].center.y);
-			}
+			
 			axisLabels();
 			p.pop();
 		};
 
+		function averageLine() {
+			if (currentStageNumber >= showAverageStage) {
+				// p.stroke(255, 0, 251,160);
+				hlYellow.setAlpha(200);
+				p.stroke(hlYellow);
+				p.strokeWeight(0.8/zoom);
+				p.line(circles[circles.length-2].center.x,circles[circles.length-2].center.y,circles[circles.length-3].center.x, circles[circles.length-3].center.y);
+			}
+		}
+
 		function axisLines() {
 			if (currentStageNumber !== 0) {
         		// Set common properties
-				p.stroke("#5c395c");
+				p.stroke("#452345");
 				p.strokeWeight(1 / zoom);
 				p.line(w / 2, -h * 100 * zoom, w / 2, h * 100 * zoom);
 				p.line(-w * 100 * zoom, h / 2, w * 100 * zoom, h / 2);
@@ -246,6 +264,10 @@
 			zoomedGuidedTour = true;
 			guidedTour = true;
 			stage = copy.story[currentStageNumber].stage;
+
+			if (currentStageNumber < showAverageStage && circles[n].obj.yellow && n != circles.length -1) {
+				return false;
+			}
 			if (stage == "explore" || stage == "preexplore") {
 				return true;
 			}
@@ -297,7 +319,7 @@
 				centerAndZoomOnCoordinate(w/2, h/2, 0.95);
 			}
 			if (copy.story[currentStageNumber].stage == "one_similar_job") {
-				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 8, 0.1);
+				centerAndZoomOnCoordinate(circles[maxIndicies[0]].center.x, circles[maxIndicies[0]].center.y, 10, 0.2);
 			}
 			if (copy.story[currentStageNumber].stage == "other_similar_jobs") {
 				centerAndZoomOnCoordinate(w/2, h/2, 0.9);
@@ -330,7 +352,6 @@
 			maxSpeed = 8;
 			maxForce = 5;
 			if (currentStageNumber == 0) {
-				lerpSpeed = 0.1;
 				maxSpeed = 15;
 				maxForce = 10;
 			} else if (zoomedGuidedTour || userControl) {
@@ -369,10 +390,12 @@
 
 		    let previousZoom = zoom;
 
-		    if (event.delta > 0) {
-		        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom out
-		    } else {
-		        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]); // Zoom in
+		    if (event.delta > 0 && zoom > zoomMinMax[0]) {
+		        // Zoom out, only if zoom is greater than the minimum value
+		        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
+		    } else if (event.delta < 0 && zoom < zoomMinMax[1]) {
+		        // Zoom in, only if zoom is less than the maximum value
+		        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
 		    }
 
 		    // Calculate the difference in zoom and adjust the offset
@@ -426,32 +449,36 @@
 		    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
 		    userControl = true;
 		    
-		    
 		    if (p.touches.length === 1) {
-		    	if (pinchZooming) {
-		    		startX = p.touches[0].x - offsetX;
-		    		startY = p.touches[0].y - offsetY;
+		        if (pinchZooming) {
+		            startX = p.touches[0].x - offsetX;
+		            startY = p.touches[0].y - offsetY;
 		            pinchZooming = false; // Exit pinch zoom mode
 		        }
 		        // Pan with single finger swipe
 		        offsetX = p.touches[0].x - startX;
 		        offsetY = p.touches[0].y - startY;
 		    } else if (p.touches.length === 2) {
-		    	let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+		        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-		    	if (previousDistance) {
-		    		let zoomChange = currentDistance / previousDistance;
-		    		zoom = p.constrain(zoom * zoomChange, zoomMinMax[0], zoomMinMax[1]);
+		        if (previousDistance) {
+		            let zoomChange = currentDistance / previousDistance;
+		            let newZoom = zoom * zoomChange;
 
-		    		let midX = (p.touches[0].x + p.touches[1].x) / 2;
-		    		let midY = (p.touches[0].y + p.touches[1].y) / 2;
+		            // Only allow zooming if within the constraints
+		            if (newZoom >= zoomMinMax[0] && newZoom <= zoomMinMax[1]) {
+		                zoom = newZoom;
 
-		    		offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
-		    		offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
-		    	}
+		                let midX = (p.touches[0].x + p.touches[1].x) / 2;
+		                let midY = (p.touches[0].y + p.touches[1].y) / 2;
 
-		    	previousDistance = currentDistance;
-		    	pinchZooming = true;
+		                offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
+		                offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
+		            }
+		        }
+
+		        previousDistance = currentDistance;
+		        pinchZooming = true;
 		    }
 
 		    return false; // Prevent default behavior (like scrolling the page)
@@ -515,11 +542,8 @@
 				this.obj = obj;
 				this.index = index;
 				this.radius = this.calculateOptimalSquareDimensions(obj.dots / divider, dotSize);
-				if (obj.OCCUPATION == "You") {
-					this.radius = 10;
-				}
-				if (obj.OCCUPATION == "Sitter avg." || obj.OCCUPATION == "Stander avg.") {
-					this.radius = 20;
+				if (obj.OCCUPATION == "You" || obj.OCCUPATION == "Sitter avg." || obj.OCCUPATION == "Stander avg.") {
+					this.radius = 30;
 				}
 				this.currentColors = Array(this.obj.dots).fill(p.color("#523c50"));
 				this.center = p.createVector(
@@ -591,20 +615,30 @@
 
 
 			updatePeoplePositions(newCenter) {
-				let gridSize = Math.ceil(Math.sqrt(this.peoplePositions.length));
+			    let gridSize = Math.ceil(Math.sqrt(this.peoplePositions.length));
 			    let spacing = dotSize * 0.6; // Tighter spacing between dots
 
 			    let startX = newCenter.x - ((gridSize - 1) / 2) * spacing; // Center the grid horizontally
 			    let startY = newCenter.y - ((gridSize - 1) / 2) * spacing; // Center the grid vertically
 
+			    if (gridSize == 1) {
+			    	let startY = newCenter.y;
+			    }
+
+			    // Check if there are more columns than rows and adjust startY
+			    let totalRows = Math.ceil(this.peoplePositions.length / gridSize);
+			    if (gridSize > totalRows) {
+			        startY += dotSize/2.8; // Move positions up by half a grid size
+			    }
+
 			    let dotsPlaced = 0;
 			    for (let row = 0; row < gridSize && dotsPlaced < this.peoplePositions.length; row++) {
-			    	for (let col = 0; col < gridSize && dotsPlaced < this.peoplePositions.length; col++) {
-			    		let x = startX + col * spacing;
-			    		let y = startY + row * spacing;
-			    		this.peoplePositions[dotsPlaced] = p.createVector(x, y);
-			    		dotsPlaced++;
-			    	}
+			        for (let col = 0; col < gridSize && dotsPlaced < this.peoplePositions.length; col++) {
+			            let x = startX + col * spacing;
+			            let y = startY + row * spacing;
+			            this.peoplePositions[dotsPlaced] = p.createVector(x, y);
+			            dotsPlaced++;
+			        }
 			    }
 			}
 
@@ -642,10 +676,10 @@
 				this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
 
 				if (this.obj.OCCUPATION == "You") {
-					this.radius = 10;
+					this.radius = 30;
 				}
 				if (this.obj.OCCUPATION == "Sitter avg." || this.obj.OCCUPATION == "Stander avg.") {
-					this.radius = 20;
+					this.radius = 30;
 				}
 
 			    // Calculate the main target position
@@ -754,7 +788,7 @@
 				let distance = p.Vector.dist(this.center, other.center);
 			    let minDist = (this.radius/1.5 + other.radius/1.5); // Minimum distance to prevent overlap
 
-			    if (distance < minDist) {
+			    if (distance < minDist && !this.obj.yellow && !other.obj.yellow) {
 			    	let overlap = minDist - distance;
 			    	let direction = p.Vector.sub(other.center, this.center);
 			    	direction.normalize();
@@ -796,34 +830,28 @@
 
 
 				if (this.hovered || this.textDisplayed) {
-					p.stroke("#ffffff");
-					p.strokeWeight(0.4 / zoom);
+					p.stroke("#d184d1");
+					p.strokeWeight(1 / zoom);
 				}
 
 				if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
 					job_hl_index = this.index;
-					p.stroke("#ffffff");
-					p.strokeWeight(0.4 / zoom);
+					p.stroke("#d184d1");
+					p.strokeWeight(1 / zoom);
 				}
 
-				if (this.obj.OCCUPATION == "You" ) {
-					p.stroke(252, 186, 3);
-					p.fill(252, 186, 3);
-					p.strokeWeight(0.4 / zoom);
-					p.circle(this.center.x, this.center.y, 10);
-				} else if (this.obj.OCCUPATION == "Sitter avg." || this.obj.OCCUPATION == "Stander avg.") {
-					p.stroke(255, 0, 251);
-					p.fill(255, 0, 251);
+				if (this.obj.OCCUPATION == "You" || this.obj.OCCUPATION == "Sitter avg." || this.obj.OCCUPATION == "Stander avg.") {
+					hlYellow.setAlpha(255);
+					p.stroke(hlYellow);
+					p.fill(hlYellow);
 					p.strokeWeight(0.4 / zoom);
 					p.circle(this.center.x, this.center.y, 10);
 				} else if (data[this.index].score != -1) {
 					if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
-						p.stroke(252, 186, 3);
+						// p.stroke(hlYellow);
 						p.strokeWeight(0.4 / zoom);
 					}
-					// p.circle(this.center.x, this.center.y + 1, this.radius);	
-					// p.strokeWeight(1);
-					// p.stroke("#947594");
+
 					p.square(this.center.x - this.radius/2, this.center.y - this.radius/2, this.radius, this.radius/3, this.radius/3, this.radius/3, this.radius/3);	
 			        const transitionSpeed = 0.3; // Smooth transition speed
 			        const filledColor = p.color("#ff69f2");
@@ -839,9 +867,9 @@
 					    // Set the fill to unfilledColor to draw the background circle first
 			        	p.fill(unfilledColor);
 			        	if (i < Math.floor(dotsToFill)) {
-			        		p.image(standerGifs[this.personTypeStander[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/2, dotSize, dotSize);
+			        		p.image(standerGifs[this.personTypeStander[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/1.3, dotSize, dotSize);
 			        	} else {
-			        		p.image(sitterGifs[this.personTypeSitter[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/2, dotSize, dotSize);
+			        		p.image(sitterGifs[this.personTypeSitter[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/1.3, dotSize, dotSize);
 			        	}
 			        }
 			    }
@@ -887,7 +915,7 @@
 			displayText(otherCircles) {
 			    const maxAlpha = 255; // Full opacity
 			    const fadeSpeed = 20; // Slower fade speed for smoother transition
-			    const overlapThreshold = 15; // Minimum overlap before hiding text
+			    const overlapThreshold = 5; // Minimum overlap before hiding text
 
 			    // Initialize alpha if not already defined
 			    if (this.alpha === undefined) {
@@ -908,20 +936,21 @@
 			    // Determine shouldDisplayText based on prioritization rules, with searchValue and hovered conditions
 			    let shouldDisplayText = 
 			    this.hovered || 
+			    this.obj.yellow ||
 			    (searchValue !== "" && searchValue === this.obj.OCCUPATION) || 
 			    highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1 || 
 			    (prioritizeVarPct && (
-			    	(this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
-			    	(!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
-			    	));
+			        (this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
+			        (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
+			        ));
 
 			    // Add stability to the text display logic
 			    if (shouldDisplayText) {
-			    	if (this.alpha < maxAlpha - overlapThreshold) {
+			        if (this.alpha < maxAlpha - overlapThreshold) {
 			            this.alpha = Math.min(this.alpha + fadeSpeed, maxAlpha); // Fade in
 			        }
 			    } else {
-			    	if (this.alpha > overlapThreshold) {
+			        if (this.alpha > overlapThreshold) {
 			            this.alpha = Math.max(this.alpha - fadeSpeed, 0); // Fade out more gradually
 			        } else {
 			            this.alpha = 0; // Set to fully transparent if too low
@@ -931,11 +960,13 @@
 			    // Only draw text if it's at least partially visible
 			    if (this.alpha > 0) {
 			        // Set the fill color with current alpha for fading effect
-			    	if (this.obj.OCCUPATION === "You" || this.hovered || searchValue === this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
-			    		p.fill(252, 186, 3, this.alpha);
-			    	} else {
-			    		p.fill(191, 172, 201, this.alpha);
-			    	}
+			        if (this.obj.yellow || searchValue === this.obj.OCCUPATION) {
+			            hlYellow.setAlpha(this.alpha);
+			            p.fill(hlYellow);
+			        } else {
+			            labelPurple.setAlpha(this.alpha);
+			            p.fill(labelPurple);
+			        }
 
 			        const maxTextWidth = 100 / zoom; // Scale the maximum width based on zoom
 			        const scaledFontSize = 12 / zoom; // Adjust font size based on zoom
@@ -946,16 +977,19 @@
 			        // Align the text to be centered
 			        p.textAlign(p.CENTER, p.BOTTOM);
 
-			        // Position the text closer to the top of the rectangle
+			        // Position the text exactly at the top edge of the square
 			        let xPos = this.center.x;
-			        let yPos = this.center.y - this.radius / 2 - 2; // Reduced gap to place the text closer to the rectangle
-
+			        let yPos = this.center.y - this.radius / 2; // Position at the top edge of the square
+			        if (this.obj.yellow) {
+			        	yPos += 7*zoom;
+			        }
 			        p.stroke("#150317");
-			        p.strokeWeight(4 / zoom);
+			        p.smooth();
+			        p.strokeWeight(5 / zoom);
 
 			        // Display text based on searchValue condition
 			        if (searchValue === "" || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
-			        	p.text(this.obj.OCC_SHORT, xPos, yPos);
+			            p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        }
 
 			        this.textDisplayed = true; // Mark text as displayed

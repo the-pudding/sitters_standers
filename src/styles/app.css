@@ -215,7 +215,7 @@ select, button, input {
 }
 .answers {
 	text-align: center;
-	bottom: 35px;
+	bottom: 50px;
 }
 .answerButton {
 	width: 49%;
@@ -232,6 +232,12 @@ select, button, input {
 	top: -2px;
 	font-weight: bold;
 	position: relative;
+}
+
+.smalltext {
+	color: var(--color-light-purple);
+	font-size:  13px;
+	margin:  5px 0 10px;
 }
 .stage_0 .back {
 	opacity: 0;
@@ -305,19 +311,19 @@ select, button, input {
 	height: 15px;
 	display: inline-block;
 	border: 1px solid #eee;
-	border-radius: 50%;
+	border-radius: 30%;
 	margin-right: 0px;
 	margin-bottom: -2px;
 }
-.text span.dot {
-	width: 8px;
-	height: 8px;
+.text span.personGif {
+	width: 11px;
+	height: 20px;
 	display: inline-block;
 	margin-right: 0px;
 	margin-left: 2px;
-	margin-bottom: 2px;
-	background: #8f5089;
-	border-radius: 50%;
+	margin-bottom: -2px;
+	background-image:  url("assets/app/PersonIcon.png");
+	background-size:  cover;
 }
 .text a {
 	pointer-events: auto !important;
@@ -331,7 +337,7 @@ select, button, input {
 	font-size: 13px;
 	color: var(--color-light-purple);
 	position: absolute;
-	bottom: 10px;
+	bottom: 30px;
 	left: 50%;
 	transform: translateX(-50%);
 }
@@ -379,4 +385,16 @@ select, button, input {
 	line-height:  13px;
 	margin-top:  10px;
 	color:  var(--color-light-purple);
+}
+.pink {
+	 color:  rgb(241, 82, 255) !important;
+}
+.pinkdot {
+	width: 10px;
+	height: 10px;
+	display: inline-block;
+	background:  rgb(241, 82, 255);
+	border-radius: 50%;
+	margin-right: 3px;
+	margin-bottom: 0px;
 }
