@@ -25,7 +25,6 @@
 		width: calc(100% - 5px);
 		z-index: 99999;
 		background: var(--color-off-purple);
-		font-size: 15px;
 		line-height:  20px;
 		appearance: none; /* Ensure custom styles are applied */
 		-webkit-appearance: none; /* For WebKit browsers */
@@ -40,6 +39,7 @@
 		text-overflow: ellipsis;
 		background-position: right 10px center;
 		background-size: 12px;
+		font-size: 16px;
 	}
 	option {
 		height: 30px;

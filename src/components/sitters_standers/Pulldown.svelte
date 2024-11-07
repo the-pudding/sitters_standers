@@ -24,8 +24,8 @@
 		position: absolute;
 		width: calc(100% - 5px);
 		z-index: 99999;
-		background: var(--color-off-purple);
-		font-size: 15px;
+		background: var(--color-off-purple) !important;
+		font-size: 16px;
 		line-height:  20px;
 		appearance: none; /* Ensure custom styles are applied */
 		-webkit-appearance: none; /* For WebKit browsers */

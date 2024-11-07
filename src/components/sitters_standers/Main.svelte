@@ -61,9 +61,10 @@
 			stander[hed] = -1;
 			let weightedAverage = {"sitter": [0,0], "stander": [0,0]};
 			data.forEach(item => {
-				const val = hed in item && item[hed] && item[x_axis_variable]
+				let val = hed in item && item[hed] && item[x_axis_variable]
 				? Number(item[hed].toString().replace(/[^0-9.]/g, '')) || -1
 				: -1;
+				
 				if (val != -1) {
 					if (item[x_axis_variable] < 50) {
 						weightedAverage.sitter[0] += item.TOT_EMP*val;
@@ -94,101 +95,101 @@
 	}
 
 	function updateData() {
-	    let selectedVariables = copy.questions
-	        .filter(question => question.variable.startsWith("Percent"))
-	        .map(question => [
-	            question.variable,
-	            selectedIndices.includes(Number(question.index)) ? 1 : 0,
-	            question.cat
-	        ]);
+		let selectedVariables = copy.questions
+		.filter(question => question.variable.startsWith("Percent"))
+		.map(question => [
+			question.variable,
+			selectedIndices.includes(Number(question.index)) ? 1 : 0,
+			question.cat
+			]);
 
 	    // Update You
-	    for (let i = 0; i < selectedVariables.length; i++) {
-	        const varname = selectedVariables[i][0];
-	        const qanswer = selectedVariables[i][1];
-	        const varcat = selectedVariables[i][2];
-	        data[data.length - 1][varname] = qanswer * 100;
-	        if (varcat == "demographics") {
-	            data[data.length - 1][varname] = -1;
-	        } else if (data[data.length - 1][varname] == 0) {
-	            data[data.length - 1][varname] = 0.1;
-	        }
-	    }
-	    data[data.length - 1]["A_MEAN"] = selectedSalary;
-	    data[data.length - 1]["PCT_STAND"] = selectedStandingPct;
+		for (let i = 0; i < selectedVariables.length; i++) {
+			const varname = selectedVariables[i][0];
+			const qanswer = selectedVariables[i][1];
+			const varcat = selectedVariables[i][2];
+			data[data.length - 1][varname] = qanswer * 100;
+			if (varcat == "demographics") {
+				data[data.length - 1][varname] = -1;
+			} else if (data[data.length - 1][varname] == 0) {
+				data[data.length - 1][varname] = 0.1;
+			}
+		}
+		data[data.length - 1]["A_MEAN"] = selectedSalary;
+		data[data.length - 1]["PCT_STAND"] = selectedStandingPct;
 
 	    // Step 1: Collect all the scores
-	    let scoresWithIndices = [];
-	    let nudgeDirection = 1, nudgeAmount = 0;
+		let scoresWithIndices = [];
+		let nudgeDirection = 1, nudgeAmount = 0;
 
-	    data.forEach((item, i) => {
-	        item.score = 0;
-	        if (selectedStandingPct == -1 && item.OCC_SHORT == "YOU") {
-	            item.score = -1;
-	        } else if (copy.story[currentStageNumber].hl === undefined) {
-	            if (item.yellow) {
-	                item.score = 50;
-	                if (item.OCC_SHORT == "YOU") {
-	                    item.score = 55;
-	                }
-	            } else if (prefersReducedMotion) {
-	                item.score = 50 + (nudgeDirection * nudgeAmount);
-	                nudgeDirection *= -1;
-	                nudgeAmount += 0.05;
-	            } else {
-	                item.score = 50 + (nudgeDirection * nudgeAmount);
-	                nudgeDirection *= -1;
-	                nudgeAmount += 0.01;
-	            }
-	        } else {
-	            const value = currentVar in item && item[currentVar] && item[x_axis_variable]
-	                ? Number(item[currentVar].toString().replace(/[^0-9.]/g, '')) || -1
-	                : -1;
-	            item.score += value;
-	        }
+		data.forEach((item, i) => {
+			item.score = 0;
+			if (item.OCC_SHORT === "YOU" && item[currentVar] === undefined && copy.story[currentStageNumber].hl !== undefined) {
+				item.score = -1;
+			} else if (copy.story[currentStageNumber].hl === undefined) {
+				if (item.yellow) {
+					item.score = 50;
+					if (item.OCC_SHORT == "YOU") {
+						item.score = 55;
+					}
+				} else if (prefersReducedMotion) {
+					item.score = 50 + (nudgeDirection * nudgeAmount);
+					nudgeDirection *= -1;
+					nudgeAmount += 0.05;
+				} else {
+					item.score = 50 + (nudgeDirection * nudgeAmount);
+					nudgeDirection *= -1;
+					nudgeAmount += 0.01;
+				}
+			} else {
+				const value = currentVar in item && item[currentVar] && item[x_axis_variable]
+				? Number(item[currentVar].toString().replace(/[^0-9.]/g, '')) || -1
+				: -1;
+				item.score += value;
+			}
 
-	        scoresWithIndices.push({
-	            job: item.OCCUPATION,
-	            index: i,
-	            n: item.n,
-	            tot_emp: item.TOT_EMP,
-	            score: item.score,
-	            dots: item.dots,
-	            value: item[x_axis_variable]
-	        });
-	    });
+			scoresWithIndices.push({
+				job: item.OCCUPATION,
+				index: i,
+				n: item.n,
+				tot_emp: item.TOT_EMP,
+				score: item.score,
+				dots: item.dots,
+				value: item[x_axis_variable]
+			});
+		});
 
 	    // Sort to figure out the top X and bottom X
-	    const scoresWithValues = [...scoresWithIndices].sort((a, b) => a.value - b.value);
-	    const numberOfIntroJobs = 30;
-	    const filteredScores = scoresWithValues.filter(item => item.job !== "You");
+		const scoresWithValues = [...scoresWithIndices].sort((a, b) => a.value - b.value);
+		const numberOfIntroJobs = 30;
+		const filteredScores = scoresWithValues.filter(item => item.job !== "You");
 
-	    minIndicies = filteredScores.slice(0, numberOfIntroJobs).map(item => item.index);
-	    maxIndicies = filteredScores.slice(-numberOfIntroJobs).map(item => item.index);
+		minIndicies = filteredScores.slice(0, numberOfIntroJobs).map(item => item.index);
+		maxIndicies = filteredScores.slice(-numberOfIntroJobs).map(item => item.index);
 
-	    [scoresWithIndices.find(item => item.n == 157)?.index].forEach(index => {
-	        if (index !== undefined) { 
-	        	maxIndicies.unshift(index)
-	        };
-	    });
+		[scoresWithIndices.find(item => item.n == 157)?.index].forEach(index => {
+			if (index !== undefined) { 
+				maxIndicies.unshift(index)
+			};
+		});
 
 
-	    [scoresWithIndices.find(item => item.n == 44)?.index].forEach(index => {
-	        if (index !== undefined) {
-	        	minIndicies.unshift(index);
-	    	}
-	    });
+		[scoresWithIndices.find(item => item.n == 44)?.index].forEach(index => {
+			if (index !== undefined) {
+				minIndicies.unshift(index);
+			}
+		});
 
 	    // Get min and max, weighted by TOT_EMP
-	    scoresWithIndices.sort((a, b) => a.score - b.score);
-	    const smoothingAmounts = [30, 30];
+		scoresWithIndices.sort((a, b) => a.score - b.score);
+		const smoothingAmounts = [30, 30];
 
 	    // Calculate weighted minAvg
-	    let totalWeightMin = 0;
-	    let weightedSumMin = 0;
-	    for (let i = 0; i < smoothingAmounts[0]; i++) {
-	        const item = scoresWithIndices[i];
-	        if (item) {
+		let totalWeightMin = 0;
+		let weightedSumMin = 0;
+		for (let i = 0; i < smoothingAmounts[0]; i++) {
+			const item = scoresWithIndices[i];
+			if (item) {
 	            const weight = item.tot_emp || 1; // Use item.TOT_EMP as the weight, default to 1
 	            weightedSumMin += item.score * weight;
 	            totalWeightMin += weight;
@@ -200,8 +201,8 @@
 	    let totalWeightMax = 0;
 	    let weightedSumMax = 0;
 	    for (let i = scoresWithIndices.length - smoothingAmounts[1]; i < scoresWithIndices.length; i++) {
-	        const item = scoresWithIndices[i];
-	        if (item) {
+	    	const item = scoresWithIndices[i];
+	    	if (item) {
 	            const weight = item.tot_emp || 1; // Use item.TOT_EMP as the weight, default to 1
 	            weightedSumMax += item.score * weight;
 	            totalWeightMax += weight;
@@ -213,7 +214,7 @@
 	    minmax[1] = maxAvg;
 
 	    const minmaxMap = {
-	        undefined: [0, 100]
+	    	undefined: [0, 100]
 	    };
 
 	    minmax = minmaxMap[currentVar] || [minAvg, maxAvg];
@@ -252,7 +253,7 @@
 		if (selectedStandingPct == -1) {
 			const indexWithShowYou = copy.story.findIndex(item => item.showyou == 1);
 			if (indexWithShowYou !== -1) {
-			    copy.story.splice(indexWithShowYou, 1);
+				copy.story.splice(indexWithShowYou, 1);
 			}
 			showAverageStage = 8;
 		}
@@ -266,6 +267,7 @@
 </script>
 
 <div class="container">
+
 	<Intro {copy} {data} {currentStageNumber} bind:selectedSalary bind:searchValue bind:selectedIndices bind:introActive bind:selectedStandingPct bind:questionNumber/>
 	{#if copy.story[currentStageNumber].cat == "ExploreInstruction" && !explored}
 	<div class="exploreInstruction" transition:fade>
@@ -275,7 +277,7 @@
 	{/if}
 	{#if !introActive}
 	<div class="canvasContainer" transition:fade>
-		<Canvas {prefersReducedMotion} {bg} {axis_flip} {x_axis_variable} {axis_variable} {x_axis_variable_range} {searchValue} {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} {showAverageStage} bind:reset bind:explored/>
+		<Canvas {prefersReducedMotion} {bg} {axis_flip} {x_axis_variable} {axis_variable} {x_axis_variable_range} bind:searchValue {selectedIndices} {data} {copy} questions={currentQuestionOrder} {currentVar} {currentData} {currentQuestionNum} {currentStageNumber} {minmax} {minIndicies} {maxIndicies} {showAverageStage} bind:reset bind:explored/>
 		<!-- {#key axis_variable}
 		<Axis {currentStageNumber} {axis_flip} {axis_variable} {x_axis_variable} {x_axis_variable_range} />
 		{/key} -->

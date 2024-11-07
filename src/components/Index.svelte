@@ -5,6 +5,7 @@
 	// import Footer from "$components/Footer.svelte";
 
 	const copy = getContext("copy");
+	let stage;
 	import headervars from "$data/headervars.json";
 	let x_axis_variable = "PCT_STAND";
 	let introActive = true;
@@ -18,8 +19,11 @@
 	// Filter out data where x_axis_variable is undefined or null
 	const filteredData = data.filter(d => d[x_axis_variable] != "");
 
-	$: currentStageNumber;
+	$: {
+		stage = copy.story[currentStageNumber].stage;
+		currentStageNumber, stage;
+	}
 </script>
 
-<Header {currentStageNumber} {introActive}/>
+<Header {currentStageNumber} {introActive} {stage}/>
 <Sitters_Standers {headervars} {copy} data={filteredData} {x_axis_variable} bind:introActive bind:currentStageNumber />

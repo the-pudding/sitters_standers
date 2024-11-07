@@ -1,8 +1,9 @@
 <script>
 	// shadow, plain, line, bubble
 	import wordmark from "$svg/wordmark-shadow.svg";
+	import wordmarksmall from "$svg/logo-white.svg";
 	import { fade } from 'svelte/transition';
-	export let currentStageNumber, introActive;
+	export let currentStageNumber, introActive, stage;
 </script>
 
 <header>
@@ -10,6 +11,13 @@
 	<div class="wordmark" transition:fade>
 		<a href="https://pudding.cool" aria-label="The Pudding" target="_self"
 			>{@html wordmark}</a
+		>
+	</div>
+	{/if}
+	{#if stage == "explore"}
+		<div class="wordmark small" transition:fade>
+		<a href="https://pudding.cool" aria-label="The Pudding" target="_self"
+			>{@html wordmarksmall}</a
 		>
 	</div>
 	{/if}
@@ -24,6 +32,9 @@
 		margin: 0 auto;
 		padding: 15px;
 		transform: rotate(-4deg);
+	}
+	.wordmark.small {
+		max-width:  6em;
 	}
 
 	.wordmark a {
@@ -43,5 +54,8 @@
 			padding: 20px 0px 0 0;
 			transform: rotate(-4deg);
 		}
+		.wordmark.small {
+		max-width:  3em;
+	}
 	}
 </style>

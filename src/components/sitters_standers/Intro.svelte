@@ -14,7 +14,7 @@
 	let shown = false;
 	let jobSearchShown = false;
 	let flyValue = 200;
-	let query;
+	let query = searchValue;
 	let prev_query;
 	let formatted = [];
 	let options = { keys: ["OCCUPATION"] };
@@ -22,7 +22,8 @@
 	let selectedStandingIndex = null;
 	let nodatashown = false;
 	let isNextDisabled = false;
-	
+	let isInputFocused = false;
+	let searchShown = false;
 
 	const questionOrder = ["intro","stand_sit","body","other","salary"];
 	const buttonOrder = ["Start <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Next <span>→</span>","Let's go <span>→</span>"]
@@ -66,96 +67,114 @@
     	if (selectedSalaryIndex !== index) {
 	        selectedSalaryIndex = index; // Set the new selected index
 	        selectedSalary = salary === "Prefer not to answer" ? -1 : getMidpoint(salary);
-    	}
-    }
+	    }
+	}
 
-    function addStanding(hours, index) {
+	function addStanding(hours, index) {
 	    // Only set the selection if it's not currently selected
-	    if (selectedStandingIndex !== index) {
+		if (selectedStandingIndex !== index) {
 	        selectedStandingIndex = index; // Set the new selected index
 	        selectedStandingPct = hours === "I don't work" ? -1 : getMidpoint(hours);
 	    }
 	}
 
-    function skipQuestions() {
-    	selectedStandingPct = -1;
-    	selectedSalary = -1;
-    	introActive = false;
-    	shown = false;	
-    }
+	function skipQuestions() {
+		selectedStandingPct = -1;
+		selectedSalary = -1;
+		introActive = false;
+		shown = false;	
+	}
 
 
-    function buttonBack() {
-    	if (questionNumber > 0) {
-    		questionNumber -= 1;
-    		flyValue = -200;
-    	}
-    }
+	function buttonBack() {
+		if (questionNumber > 0) {
+			questionNumber -= 1;
+			flyValue = -200;
+		}
+	}
 
-    function searchJob(j) {
-    	nodatashown = false;
-    	searchValue = j.map(obj => obj.text).join('');
-    	searchIndex = data.findIndex(obj => obj.OCCUPATION === searchValue);
-    	nodatashown = data[searchIndex].score == -1 ? true : false;
-    	query = searchValue;
-    }
+	function searchJob(j) {
+	    nodatashown = false;
+	    searchValue = j.map(obj => obj.text).join(''); // Update searchValue from selected item
+	    query = searchValue; // Sync input box with searchValue
+	    searchIndex = data.findIndex(obj => obj.OCCUPATION === searchValue);
+	    nodatashown = data[searchIndex]?.score === -1 ? true : false;
+	    searchShown = false;
+	}
 
-    function inputFocus() {
-    	query = "";
-    	searchValue = "";
-    }
 
-    function buttonClicked() {
-    	if (selectedStandingPct == -1 && questionNumber == 1) {
-    		skipQuestions();
-    	} 
-    	flyValue = 200;
-    	if (questionNumber == questionOrder.length - 1) {
-    		introActive = false;
-    		shown = false;	
-    	}
-    	questionNumber += 1;
-    }
+	
+	function inputFocus() {
+	    isInputFocused = true;
+	    query = "";        // Clear the input box
+	    searchValue = "";  // Clear searchValue
+	    searchShown = true;
+	}
+
+	// Function to handle input focus
+	function handleInputFocus() {
+	    isInputFocused = true;
+	}
+
+	function handleInputBlur() {
+	    isInputFocused = false;
+	    searchValue = query; // Sync searchValue with query on blur
+	}
+
+	function buttonClicked() {
+		if (selectedStandingPct == -1 && questionNumber == 1) {
+			skipQuestions();
+		} 
+		flyValue = 200;
+		if (questionNumber == questionOrder.length - 1) {
+			introActive = false;
+			shown = false;	
+		}
+		questionNumber += 1;
+	}
 
 	function handleKeydown(event) {
 	    // Check if the "Next" action should be disabled based on question number and selection status
-	    if ((questionNumber === 1 && selectedStandingPct === undefined) || (questionNumber === 4 && selectedSalary === undefined))  {
-	    	isNextDisabled = true;
-	    } 
+		if ((questionNumber === 1 && selectedStandingPct === undefined) || (questionNumber === 4 && selectedSalary === undefined))  {
+			isNextDisabled = true;
+		} 
 
-	    if (isNextDisabled && event.key === 'ArrowRight') {
+		if (isNextDisabled && event.key === 'ArrowRight') {
 	        return; // Prevent advancing if the "Next" action should be disabled
 	    }
 
 	    if (event.key === 'ArrowRight') {
-	        buttonClicked();
+	    	buttonClicked();
 	    } else if (event.key === 'ArrowLeft') {
-	        buttonBack();
+	    	buttonBack();
 	    }
 	}
 
 	// Add and remove event listeners when component mounts and unmounts
-    onMount(() => {
-    	if (typeof window !== 'undefined') {
-    		window.addEventListener('keydown', handleKeydown);
-    	}
-    });
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('keydown', handleKeydown);
+		}
+	});
 
 	// Cleanup event listener
-    onDestroy(() => {
-    	if (typeof window !== 'undefined') {
-    		window.removeEventListener('keydown', handleKeydown);
-    	}
-    });
-    $: {
-    	isNextDisabled = 
-        (questionNumber === 1 && selectedStandingPct === undefined) || 
-        (questionNumber === 4 && selectedSalary === undefined);
-    	selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
-    	if (searchValue == "") {
-    		nodatashown = false;
-    	}
-    }
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('keydown', handleKeydown);
+		}
+	});
+	$: {
+		if (searchValue !== query && !isInputFocused) {
+		    query = searchValue;
+		}
+		isNextDisabled = 
+		(questionNumber === 1 && selectedStandingPct === undefined) || 
+		(questionNumber === 4 && selectedSalary === undefined);
+		selectedIndices, introActive, searchValue, formatted, selectedSalary, selectedSalaryIndex;
+		if (searchValue == "") {
+			nodatashown = false;
+		}
+	}
 </script>
 
 {#if introActive}
@@ -214,29 +233,29 @@
 				{/if}
 				{#if questionOrder[questionNumber] != "intro"}
 				<button 
-                  class="answerButton" 
-                  on:click={buttonClicked} 
-                  disabled={isNextDisabled}>
-                  {@html buttonOrder[questionNumber]}
-                </button>
-				{:else}
-				<button class="answerButton" on:click={buttonClicked}>{@html buttonOrder[questionNumber]}</button>
-				{/if}
-			</div>
+				class="answerButton" 
+				on:click={buttonClicked} 
+				disabled={isNextDisabled}>
+				{@html buttonOrder[questionNumber]}
+			</button>
+			{:else}
+			<button class="answerButton" on:click={buttonClicked}>{@html buttonOrder[questionNumber]}</button>
 			{/if}
-		</div>
-		{/key}
-		{#if questionNumber > 0}
-		<div class="dotContainer" transition:fade>
-			{#each questionOrder as q, i}
-			{#if i != 0}
-			<span class="dot {questionNumber >= i ? 'selected' : ''}"></span>
-			{/if}
-			{/each}
 		</div>
 		{/if}
-
 	</div>
+	{/key}
+	{#if questionNumber > 0}
+	<div class="dotContainer" transition:fade>
+		{#each questionOrder as q, i}
+		{#if i != 0}
+		<span class="dot {questionNumber >= i ? 'selected' : ''}"></span>
+		{/if}
+		{/each}
+	</div>
+	{/if}
+
+</div>
 
 
 </div>
@@ -255,33 +274,35 @@
 {/if}
 
 
+
 {#if !introActive && copy.story[currentStageNumber].stage == "explore"}
 <div class="panel jobSearch">
-	<input bind:value={query}  on:focus={inputFocus} placeholder="Search job titles..."/>
+	<input 
+	    bind:value={query} 
+	    on:focus={inputFocus} 
+	    on:blur={handleInputBlur} 
+	    placeholder="Search job titles..."
+	/>
 	<Fuzzy {query} {data} {options} bind:formatted />
-	{#if searchValue == ""}
-	{#each formatted.slice(0, 8) as item}
-	{#each item as line}
-	<button class="answerItem" on:click={() => searchJob(line)}>
-		{#each line as { matches, text }}
-		{text}
+
+	{#if searchShown}
+		{#each formatted.slice(0, 4) as item}
+			{#each item as line}
+			<button class="answerItem" on:click={() => searchJob(line)}>
+				{#each line as { matches, text }}
+					{text}
+				{/each}
+			</button>
+			{/each}
 		{/each}
-	</button>
-	{/each}
-	{/each}
 	{/if}
 	{#if nodatashown}
-	<div class="nodata">
-		&#9888; This job doesn't have data for this variable. Choose another job or variable.
-	</div>
+		<div class="nodata">
+			&#9888; This job doesn't have data for this variable. Choose another job or variable.
+		</div>
 	{/if}
 </div>
-
 {/if}
-
-
-
-
 <style>
 	
 	h1 {
@@ -320,9 +341,9 @@
 		background: var(--color-dark-purple);;
 		position: fixed;
 		left: auto;
-		right: 25px;
+		right: 27px;
 		border: 1px solid var(--color-light-purple);
-		top: 223px;
+		top: 210px;
 		width: 320px;
 		padding: 0px;
 		scrollbar-width: inherit;
@@ -341,7 +362,10 @@
 	.jobSearch input {
 		width: 100%;
 		border-radius: 0;
+		font-size:  16px;
+		background: var(--color-off-purple);
 	}
+
 	.jobSearch input:focus {
 		outline: 0;
 		border: none;
@@ -407,61 +431,60 @@
 	.toolbutton:hover {
 		z-index: 99999;
 	}
-@media (width <= 800px) {
-	.toolbutton {
-		display: none;
+	@media (width <= 800px) {
+		.toolbutton {
+			display: none;
+		}
+		.toolbutton.hideShow {
+			left:  auto;
+			right: 20px;
+			top: 20px;
+		}
+		.toolbutton.jobSearch {
+			left:  auto;
+			right: 20px;
+			top: 20px;
+		}
+		.panel {
+			right:  auto;
+			left: 70px;
+			width:  calc(100% - 80px);
+			top: 20px;
+		}
 	}
-	.toolbutton.hideShow {
-		left:  auto;
-		right: 20px;
-		top: 20px;
-	}
-	.toolbutton.jobSearch {
-		left:  auto;
-		right: 20px;
-		top: 20px;
-	}
-	.panel {
-		right:  auto;
-		left: 50%;
-		transform:  translateX(-50%);
-		width:  90%;
-		top: 15px;
-	}
-}
 
-.dotContainer {
-	width: 100%;
-	text-align: center;
-}
-.dot {
-	display: inline-block;
-	width: 9px;
-	height: 9px;
-	margin: 0 4px;
-	border-radius: 50%;
-	background: var(--color-light-purple);
-	opacity: 0.4;
-	transition: all 200ms cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
-	transition-timing-function: cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
-}
-.dot.selected {
-	background: var(--color-bright-purple);
-	opacity: 1;
-}
-.nodata {
-	position: absolute;
-	right: 10px;
-	top: calc(100% + 10px);
-	font-size: 14px;
-	color: rgb(252, 186, 3);
-}
-.introImage {
-	width: 320px;
-	height: 200px;
-	display: block;
-	font-size: 9px;
-	position: relative;
+	.dotContainer {
+		width: 100%;
+		text-align: center;
+	}
+	.dot {
+		display: inline-block;
+		width: 9px;
+		height: 9px;
+		margin: 0 4px;
+		border-radius: 50%;
+		background: var(--color-light-purple);
+		opacity: 0.4;
+		transition: all 200ms cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
+		transition-timing-function: cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
+	}
+	.dot.selected {
+		background: var(--color-bright-purple);
+		opacity: 1;
+	}
+	.nodata {
+		position: absolute;
+		right: 10px;
+		top: calc(100% + 10px);
+		font-size: 14px;
+		color: rgb(252, 186, 3);
+	}
+	.introImage {
+		width: 320px;
+		height: 200px;
+		display: block;
+		font-size: 9px;
+		position: relative;
 /* 		background:  black; */
 /* 		background: var(--color-dark-purple); */
 }

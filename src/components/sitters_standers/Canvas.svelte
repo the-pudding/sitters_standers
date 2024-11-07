@@ -44,7 +44,7 @@
 	let sitterGifs = [];
 	const standerNum = 8;
 	const sitterNum = 8;
-
+	let hoveredCircle = null;
 
 	const sketch = (p) => {
 		let hlYellow = p.color(241, 82, 255);
@@ -126,7 +126,7 @@
 			axisLines();
 			averageLine();
 			for (let i = 0; i < circles.length; i++) {
-			    if (!checkDisplay(i) || data[i].score === -1) continue;
+			    if (!checkDisplay(i) || data[i].score == -1) continue;
 
 			    circles[i].updateGroup();
 			    circles[i].update();
@@ -164,6 +164,7 @@
 				    // Check hover using adjusted mouse position
 					if (p.dist(adjustedMouseX, adjustedMouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius / 2) {
 						circles[i].hovered = true;
+                		hoveredCircle = circles[i];
 					}
 					circles[i].displayText(circles);
 				}
@@ -172,7 +173,9 @@
 			if (currentVar != new_currentVar) {
 				prevVar = currentQuestionNum == 0 ? copy.questions[0].variable : copy.questions[currentQuestionNum - 1].variable;
 				new_currentVar = currentVar;
-				stageSet = false;
+				if (stage != "explore") {
+					stageSet = false;
+				}
 			}
 			
 			axisLabels();
@@ -203,7 +206,7 @@
 		function axisLabels() {
 			p.textSize(14/zoom);
 			if (currentStageNumber !== 0) {
-				p.fill("#ffffff");
+				p.fill("#eba800");
        			 // Function to set stroke color based on bgType
 				const getStrokeColor = () => (bgType === "sit" || bgType === "stand" ? hlcolor : "#150317");
 
@@ -264,7 +267,9 @@
 			zoomedGuidedTour = true;
 			guidedTour = true;
 			stage = copy.story[currentStageNumber].stage;
-
+			if (stage == "other_similar_jobs_you" && (maxIndicies.includes(n) || n == data.length-1)) {
+				return true;
+			}
 			if (currentStageNumber < showAverageStage && circles[n].obj.yellow && n != circles.length -1) {
 				return false;
 			}
@@ -277,9 +282,7 @@
 			if (stage == "other_similar_jobs" && maxIndicies.includes(n)) {
 				return true;
 			}
-			if (stage == "other_similar_jobs_you" && (maxIndicies.includes(n) || n == data.length-1)) {
-				return true;
-			}
+			
 			if (stage == "other_dissimilar_jobs" && (minIndicies.includes(n) || maxIndicies.includes(n))) {
 				return true;
 			}
@@ -311,7 +314,8 @@
 		function setStage() {
 			if (copy.story[currentStageNumber].stage == "explore") {
 				if (!stageSet) {
-					centerAndZoomOnCoordinate(w/2, h/2, 0.95);
+					searchValue = "";
+					centerAndZoomOnCoordinate(w/2, h/2, 0.95, 1);
 					stageSet = true;
 				}
 			}
@@ -350,14 +354,14 @@
 				lerpSpeed = speed;
 			}
 			maxSpeed = 8;
-			maxForce = 5;
+			maxForce = 100;
 			if (currentStageNumber == 0) {
 				maxSpeed = 15;
-				maxForce = 10;
+				maxForce = 100;
 			} else if (zoomedGuidedTour || userControl) {
 				lerpSpeed = 0.1;
 				maxSpeed = 7;
-				maxForce = 4;
+				maxForce = 100;
 			} 
 			if (speed == 1 || prefersReducedMotion) {
 				zoom = zoomTarget;
@@ -377,126 +381,153 @@
 		    // Return true if the element is the p5.js canvas
 			return element === p.canvas;
 		}
+		let isDragging = false;
+		let hasDragged = false;
 
 		// Handle zooming with mouse wheel
-		p.mouseWheel = (event) => {
-		    if (!isMouseOverCanvas()) return; // Prevent zooming if not over the canvas
-		    userControl = true;
-		    explored = true;
-		    
-		    let scrollVelocity = Math.abs(event.delta); // Use absolute value of delta
-		    let baseZoomSpeed = 0.05 * zoom; // Base zoom speed proportional to current zoom
-		    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100); // Faster scroll leads to faster zoom
+	p.mouseWheel = (event) => {
+    if (!isMouseOverCanvas()) return;
+    userControl = true;
+    explored = true;
 
-		    let previousZoom = zoom;
+    let scrollVelocity = Math.abs(event.delta);
+    let baseZoomSpeed = 0.05 * zoom;
+    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100);
 
-		    if (event.delta > 0 && zoom > zoomMinMax[0]) {
-		        // Zoom out, only if zoom is greater than the minimum value
-		        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
-		    } else if (event.delta < 0 && zoom < zoomMinMax[1]) {
-		        // Zoom in, only if zoom is less than the maximum value
-		        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
-		    }
+    let previousZoom = zoom;
 
-		    // Calculate the difference in zoom and adjust the offset
-		    let zoomChange = zoom / previousZoom;
+    if (event.delta > 0 && zoom > zoomMinMax[0]) {
+        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
+    } else if (event.delta < 0 && zoom < zoomMinMax[1]) {
+        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
+    }
 
-		    // Focus zoom on mouse position
-		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
-		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
-		};
+    let zoomChange = zoom / previousZoom;
+
+    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
+    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
+};
+
 
 		// Handle panning with mouse drag
 		p.mousePressed = () => {
-		    if (!isMouseOverCanvas()) return; // Prevent panning if not over the canvas
-		    startX = p.mouseX - offsetX;
-		    startY = p.mouseY - offsetY;
-		};
+    if (!isMouseOverCanvas()) return;
 
-		// Handle panning with mouse drag
-		p.mouseDragged = () => {
-		    if (!isMouseOverCanvas()) return; // Prevent dragging if not over the canvas
-		    userControl = true;
-		    explored = true;
-		    
-		    offsetX = p.mouseX - startX;
-		    offsetY = p.mouseY - startY;
-		};
+    startX = p.mouseX - offsetX;
+    startY = p.mouseY - offsetY;
+    isDragging = true; // Start dragging
+    hasDragged = false; // Reset drag flag
+    hoveredCircle = null;
+};
 
-		let pinchZooming = false;
-		let wasPinching = false;
+p.mouseDragged = () => {
+    if (!isMouseOverCanvas()) return;
+    userControl = true;
+    explored = true;
 
-		p.touchStarted = () => {
-			userControl = true;
-			
-		    if (!isMouseOverCanvas()) return; // Prevent touch actions if not over the canvas
+    offsetX = p.mouseX - startX;
+    offsetY = p.mouseY - startY;
+    hasDragged = true; // Mark that dragging occurred
+};
 
-		    if (p.touches.length === 1 && !pinchZooming) {
-		        // Single touch for panning, allowed if not in pinch zoom mode
-		    	startX = p.touches[0].x - offsetX;
-		    	startY = p.touches[0].y - offsetY;
-		    } else if (p.touches.length === 2) {
-		        // Store the initial positions of two touches for pinch zoom
-		    	pinchZooming = true;
-		    	wasPinching = true;
-		    	explored = true;
-		    	previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
-		    }
-		};
+p.mouseReleased = () => {
+    if (!isDragging) return;
 
-		// Handle touch-based pinch zoom and pan
-		p.touchMoved = () => {
-		    if (!isMouseOverCanvas()) return false; // Prevent touch movement if not over the canvas
-		    userControl = true;
-		    
-		    if (p.touches.length === 1) {
-		        if (pinchZooming) {
-		            startX = p.touches[0].x - offsetX;
-		            startY = p.touches[0].y - offsetY;
-		            pinchZooming = false; // Exit pinch zoom mode
-		        }
-		        // Pan with single finger swipe
-		        offsetX = p.touches[0].x - startX;
-		        offsetY = p.touches[0].y - startY;
-		    } else if (p.touches.length === 2) {
-		        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+    isDragging = false; // Stop dragging
+    if (!hasDragged && hoveredCircle && copy.story[currentStageNumber].stage === "explore") {
+        searchValue = hoveredCircle.obj.OCCUPATION; // Only update if no dragging occurred
+    }
+    hoveredCircle = null;
+};
 
-		        if (previousDistance) {
-		            let zoomChange = currentDistance / previousDistance;
-		            let newZoom = zoom * zoomChange;
 
-		            // Only allow zooming if within the constraints
-		            if (newZoom >= zoomMinMax[0] && newZoom <= zoomMinMax[1]) {
-		                zoom = newZoom;
+		let isTouchDragging = false;
+let hasTouchDragged = false;
+let pinchZooming = false;
+let wasPinching = false;
 
-		                let midX = (p.touches[0].x + p.touches[1].x) / 2;
-		                let midY = (p.touches[0].y + p.touches[1].y) / 2;
+// Handle touch start
+p.touchStarted = () => {
+    userControl = true;
 
-		                offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
-		                offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
-		            }
-		        }
+    if (!isMouseOverCanvas()) return;
 
-		        previousDistance = currentDistance;
-		        pinchZooming = true;
-		    }
+    if (p.touches.length === 1 && !pinchZooming) {
+        // Single touch for panning
+        startX = p.touches[0].x - offsetX;
+        startY = p.touches[0].y - offsetY;
+        isTouchDragging = true;   // Start dragging
+        hasTouchDragged = false;  // Reset drag flag
+    } else if (p.touches.length === 2) {
+        // Two touches for pinch zoom
+        pinchZooming = true;
+        wasPinching = true;
+        explored = true;
+        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+    }
+};
 
-		    return false; // Prevent default behavior (like scrolling the page)
-		};
+// Handle touch move (dragging or pinch zoom)
+p.touchMoved = () => {
+    if (!isMouseOverCanvas()) return false;
+    userControl = true;
 
-		p.touchEnded = () => {
-			userControl = true;
+    if (p.touches.length === 1) {
+        if (pinchZooming) {
+            startX = p.touches[0].x - offsetX;
+            startY = p.touches[0].y - offsetY;
+            pinchZooming = false; // Exit pinch zoom mode
+        }
+        // Pan with single finger swipe
+        offsetX = p.touches[0].x - startX;
+        offsetY = p.touches[0].y - startY;
+        hasTouchDragged = true; // Mark as dragging occurred
+    } else if (p.touches.length === 2) {
+        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-			if (p.touches.length === 1 && wasPinching) {
-		        // If transitioning from a pinch, avoid jumping offsets
-				startX = p.touches[0].x - offsetX;
-				startY = p.touches[0].y - offsetY;
-		        wasPinching = false; // Reset pinch flag
-		    }
+        if (previousDistance) {
+            let zoomChange = currentDistance / previousDistance;
+            let newZoom = zoom * zoomChange;
 
-		    // Reset after touch ends
-		    previousDistance = null;
-		};
+            // Only allow zooming within constraints
+            if (newZoom >= zoomMinMax[0] && newZoom <= zoomMinMax[1]) {
+                zoom = newZoom;
+
+                let midX = (p.touches[0].x + p.touches[1].x) / 2;
+                let midY = (p.touches[0].y + p.touches[1].y) / 2;
+
+                offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
+                offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
+            }
+        }
+
+        previousDistance = currentDistance;
+        pinchZooming = true;
+    }
+
+    return false; // Prevent default behavior
+};
+
+// Handle touch end
+p.touchEnded = () => {
+    userControl = true;
+
+    if (p.touches.length === 1 && wasPinching) {
+        startX = p.touches[0].x - offsetX;
+        startY = p.touches[0].y - offsetY;
+        wasPinching = false;
+    }
+
+    if (!hasTouchDragged && !pinchZooming && hoveredCircle && copy.story[currentStageNumber].stage === "explore") {
+        searchValue = hoveredCircle.obj.OCCUPATION; // Only update if no dragging or pinch zoom occurred
+    }
+
+    // Reset flags after touch ends
+    isTouchDragging = false;
+    hasTouchDragged = false;
+    previousDistance = null;
+    hoveredCircle = null;
+};
 
 		let resizeTimeout;
 
@@ -693,6 +724,7 @@
 					: p.map(data[this.index].score, minmax[0], minmax[1], marginTop, h - 50);
 				}
 
+
 				this.target.y = p.constrain(targetY, marginTop, h);
 				this.target.x = p.constrain(
 					p.map(data[this.index][x_axis_variable], x_axis_variable_range[x_axis_variable][0], x_axis_variable_range[x_axis_variable][1], paddingX, w - paddingX),
@@ -754,14 +786,14 @@
 
 
 			adjustTargets() {
-			    let targetAdjustmentStrength = 0.1; // Gentle strength for subtle target adjustment
+			    let targetAdjustmentStrength = 0.2; // Gentle strength for subtle target adjustment
 
 			    for (let other of circles) {
 			    	if (other !== this) {
 			    		let targetDistance = p.dist(this.target.x, this.target.y, other.target.x, other.target.y);
 
 			            // Apply a gentle adjustment if targets are very close
-			            if (targetDistance < this.radius * 1.5) { // Adjust based on your desired spread
+			            if (targetDistance < this.radius) { // Adjust based on your desired spread
 			            	let repulsion = p.createVector(this.target.x - other.target.x, this.target.y - other.target.y);
 			            	repulsion.normalize();
 			            	repulsion.mult(targetAdjustmentStrength);
@@ -777,7 +809,7 @@
 
 
 			checkStopThreshold() {
-			    let velocityThreshold = 0.1; // Lower value for quicker stop
+			    let velocityThreshold = 0.01; // Lower value for quicker stop
 			    if (this.velocity.mag() < velocityThreshold) {
 			    	this.velocity.set(0, 0);
 			    }
@@ -807,8 +839,8 @@
 			        other.velocity.add(bounceEffect);
 
 			        // Strong damping to reduce jitter
-			        this.velocity.mult(0.1);
-			        other.velocity.mult(0.1);
+			        this.velocity.mult(0.01);
+			        other.velocity.mult(0.01);
 
 			        // Gradually adjust target positions to reduce overlap
 			        let targetOffset = 0.1; // Small offset to reduce overcrowding
@@ -829,7 +861,7 @@
 				p.stroke("#5e485e");
 
 
-				if (this.hovered || this.textDisplayed) {
+				if ( this.hovered || (this.textDisplayed && stage != "explore")) {
 					p.stroke("#d184d1");
 					p.strokeWeight(1 / zoom);
 				}
@@ -849,7 +881,7 @@
 				} else if (data[this.index].score != -1) {
 					if (searchValue == this.obj.OCCUPATION || highlightedJobs.indexOf(this.obj.OCCUPATION) != -1) {
 						// p.stroke(hlYellow);
-						p.strokeWeight(0.4 / zoom);
+						p.strokeWeight(1 / zoom);
 					}
 
 					p.square(this.center.x - this.radius/2, this.center.y - this.radius/2, this.radius, this.radius/3, this.radius/3, this.radius/3, this.radius/3);	
@@ -926,25 +958,22 @@
 			    let prioritizeVarPct = false;
 			    const varPctThreshold = 20; // Threshold for varPct when currentVar is not empty
 
-			    // Check if currentVar is empty or null, or if the circle is hovered
 			    if (this.obj[currentVar] > 30 && (bg == "all") || ((this.xValue > minmax[1] / 2 && bg == "stand") || (this.xValue < minmax[1] / 2 && bg == "sit"))) {
-			        prioritizeVarPct = true; // Only prioritize and show when varPct > 20
+			        prioritizeVarPct = true;
 			    } else if (!currentVar || this.hovered) {
-			        prioritizeVarPct = true; // If currentVar is empty or the circle is hovered
+			        prioritizeVarPct = true;
 			    }
 
-			    // Determine shouldDisplayText based on prioritization rules, with searchValue and hovered conditions
-			    let shouldDisplayText = 
-			    this.hovered || 
-			    this.obj.yellow ||
-			    (searchValue !== "" && searchValue === this.obj.OCCUPATION) || 
-			    highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1 || 
-			    (prioritizeVarPct && (
-			        (this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
-			        (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
+			    // Always show text if hovered, regardless of searchValue
+			    let shouldDisplayText = this.hovered || 
+			        (searchValue !== "" && searchValue === this.obj.OCCUPATION) || 
+			        this.obj.yellow ||
+			        highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1 || 
+			        (prioritizeVarPct && (
+			            (this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
+			            (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
 			        ));
 
-			    // Add stability to the text display logic
 			    if (shouldDisplayText) {
 			        if (this.alpha < maxAlpha - overlapThreshold) {
 			            this.alpha = Math.min(this.alpha + fadeSpeed, maxAlpha); // Fade in
@@ -959,8 +988,9 @@
 
 			    // Only draw text if it's at least partially visible
 			    if (this.alpha > 0) {
-			        // Set the fill color with current alpha for fading effect
-			        if (this.obj.yellow || searchValue === this.obj.OCCUPATION) {
+			    	if (searchValue === this.obj.OCCUPATION) {
+			    		p.fill("#ffffff");
+			    	} else if (this.obj.yellow) {
 			            hlYellow.setAlpha(this.alpha);
 			            p.fill(hlYellow);
 			        } else {
@@ -968,27 +998,22 @@
 			            p.fill(labelPurple);
 			        }
 
-			        const maxTextWidth = 100 / zoom; // Scale the maximum width based on zoom
-			        const scaledFontSize = 12 / zoom; // Adjust font size based on zoom
-
-			        // Set the font size before displaying text
+			        const maxTextWidth = 100 / zoom;
+			        const scaledFontSize = 12 / zoom;
 			        p.textSize(scaledFontSize);
-
-			        // Align the text to be centered
 			        p.textAlign(p.CENTER, p.BOTTOM);
 
-			        // Position the text exactly at the top edge of the square
 			        let xPos = this.center.x;
-			        let yPos = this.center.y - this.radius / 2; // Position at the top edge of the square
+			        let yPos = this.center.y - this.radius / 2;
 			        if (this.obj.yellow) {
-			        	yPos += 7*zoom;
+			             yPos = this.center.y - this.radius / 4;
 			        }
 			        p.stroke("#150317");
 			        p.smooth();
 			        p.strokeWeight(5 / zoom);
 
-			        // Display text based on searchValue condition
-			        if (searchValue === "" || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
+			        // Display text regardless of searchValue if hovered
+			        if (this.hovered || searchValue === "" || this.obj.yellow || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
 			            p.text(this.obj.OCC_SHORT, xPos, yPos);
 			        }
 
