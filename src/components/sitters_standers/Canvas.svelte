@@ -273,7 +273,7 @@
 			if (currentStageNumber < showAverageStage && circles[n].obj.yellow && n != circles.length -1) {
 				return false;
 			}
-			if (stage == "explore" || stage == "preexplore") {
+			if (stage == "explore" || stage == "preexplore" || stage == "preexplore2") {
 				return true;
 			}
 			if (stage == "one_similar_job" && n == maxIndicies[0]) {
@@ -319,7 +319,7 @@
 					stageSet = true;
 				}
 			}
-			if (copy.story[currentStageNumber].stage == "preexplore") {
+			if (copy.story[currentStageNumber].stage == "preexplore" || copy.story[currentStageNumber].stage == "preexplore2") {
 				centerAndZoomOnCoordinate(w/2, h/2, 0.95);
 			}
 			if (copy.story[currentStageNumber].stage == "one_similar_job") {
@@ -687,10 +687,13 @@ p.touchEnded = () => {
 
 		        // Smoothly transition varPct using lerp for a smoother visual effect
 				this.targetVarPct = Number(String(this.obj[currentVar]).replace(/[^0-9.]/g, ''));
-				if (currentVar == "A_MEAN" || currentVar == "INJURY_RATE" || currentVar == undefined) {
-					this.varPct = 0;
+				if (copy.story[currentStageNumber].stage == "preexplore2") {
+					this.targetVarPct = 200;
+				} else if (currentVar == "A_MEAN" || currentVar == "INJURY_RATE" || currentVar == undefined) {
+					// this.varPct = 0;
 					this.targetVarPct = 0;
 				}
+				
 				if (prefersReducedMotion) {
 					this.varPct = this.targetVarPct;
 				} else {
