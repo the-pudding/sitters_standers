@@ -1,8 +1,8 @@
 <script>
-	export let title = "Title TK";
-	export let description = "Description TK";
-	export let url = "https://pudding.cool";
-	export let keywords = "";
+	export let title = "Sitters and Standers";
+	export let description = "The American worker divide: Those who sit, and those who stand";
+	export let url = "https://pudding.cool/2024/11/sitters_standers";
+	export let keywords = "American workforce visualization, Jobs in America, Sitting vs standing at work, Physical requirements of jobs, Federal workplace survey, Worker autonomy statistics, Sitters vs standers analysis";
 	export let preloadFont = [];
 </script>
 
