@@ -74,17 +74,6 @@
 			resize();
 		};
 
-		function addToGrid(circle) {
-			let gridX = Math.floor(circle.center.x / gridSize);
-			let gridY = Math.floor(circle.center.y / gridSize);
-			if (!grid[gridX]) grid[gridX] = {};
-			if (!grid[gridX][gridY]) grid[gridX][gridY] = [];
-			grid[gridX][gridY].push(circle);
-		}
-
-		function clearGrid() {
-			grid = {};
-		}
 
 		p.draw = () => {
 
@@ -117,7 +106,6 @@
 			p.noSmooth();
 			p.background("#150317");
 
-			clearGrid();
 			p.push();
 			p.translate(offsetX, offsetY);
 			p.scale(zoom);
@@ -126,33 +114,33 @@
 			axisLines();
 			averageLine();
 			for (let i = 0; i < circles.length; i++) {
-			    if (!checkDisplay(i) || data[i].score == -1) continue;
+				if (!checkDisplay(i) || data[i].score == -1) continue;
 
-			    circles[i].updateGroup();
-			    circles[i].update();
-			    circles[i].display();
+				circles[i].updateGroup();
+				circles[i].update();
+				circles[i].display();
 
-			    if (prefersReducedMotion || ["Sitter avg.", "Stander avg."].includes(circles[i].obj.OCCUPATION)) continue;
+				if (prefersReducedMotion || ["Sitter avg.", "Stander avg."].includes(circles[i].obj.OCCUPATION)) continue;
 
-			    const withinViewport = w > 860 || (
-			        Math.abs(circles[i].center.y - circles[i].target.y) < h / 10 &&
-			        Math.abs(circles[i].center.x - circles[i].target.x) < h / 10
-			    );
+				const withinViewport = w > 860 || (
+					Math.abs(circles[i].center.y - circles[i].target.y) < h / 10 &&
+					Math.abs(circles[i].center.x - circles[i].target.x) < h / 10
+					);
 
-			    if (!withinViewport) continue;
+				if (!withinViewport) continue;
 
-			    for (let j = 0; j < circles.length; j++) {
-			        if (j === i || data[j].score === -1) continue;
+				for (let j = 0; j < circles.length; j++) {
+					if (j === i || data[j].score === -1) continue;
 
-			        const withinTargetRange = w > 860 || (
-			            Math.abs(circles[i].target.y - circles[j].target.y) < h / 10 &&
-			            Math.abs(circles[i].target.x - circles[j].target.x) < h / 10
-			        );
+					const withinTargetRange = w > 860 || (
+						Math.abs(circles[i].target.y - circles[j].target.y) < h / 10 &&
+						Math.abs(circles[i].target.x - circles[j].target.x) < h / 10
+						);
 
-			        if (withinTargetRange) {
-			            circles[i].collide(circles[j]);
-			        }
-			    }
+					if (withinTargetRange) {
+						circles[i].collide(circles[j]);
+					}
+				}
 			}
 			for (let i = 0; i < circles.length; i++) {
 				if (checkDisplay(i) && data[i].score != -1) {
@@ -161,10 +149,14 @@
 					let adjustedMouseX = (p.mouseX - offsetX) / zoom;
 					let adjustedMouseY = (p.mouseY - offsetY) / zoom;
 
-				    // Check hover using adjusted mouse position
-					if (p.dist(adjustedMouseX, adjustedMouseY, circles[i].center.x, circles[i].center.y) < circles[i].radius / 2) {
+					const dx = adjustedMouseX - circles[i].center.x;
+					const dy = adjustedMouseY - circles[i].center.y;
+					const distSquared = dx * dx + dy * dy;
+					const radiusSquared = (circles[i].radius / 2) ** 2;
+
+					if (distSquared < radiusSquared) {
 						circles[i].hovered = true;
-                		hoveredCircle = circles[i];
+						hoveredCircle = circles[i];
 					}
 					circles[i].displayText(circles);
 				}
@@ -342,36 +334,44 @@
 			}
 		}
 
-		function centerAndZoomOnCoordinate(targetX, targetY, targetZoom, speed) {
-		    // Set the zoom level to the target zoom
-			zoomTarget = targetZoom;
+		function smoothTransition(current, target, speed = 0.1) {
+		    // Ensure the speed is within a valid range
+		    speed = Math.min(Math.max(speed, 0), 1); // Clamp speed between 0 and 1
+		    return p.lerp(current, target, speed);
+		}
 
-		    // // Calculate the offset to center the target coordinate on the canvas
-			offsetXTarget = p.width / 2 - targetX * zoomTarget;
-			offsetYTarget = p.height / 2 - targetY * zoomTarget;
-			let lerpSpeed = 0.05;
-			if (speed != undefined) {
-				lerpSpeed = speed;
-			}
-			maxSpeed = 8;
-			maxForce = 100;
-			if (currentStageNumber == 0) {
-				maxSpeed = 15;
-				maxForce = 100;
-			} else if (zoomedGuidedTour || userControl) {
-				lerpSpeed = 0.1;
-				maxSpeed = 7;
-				maxForce = 100;
-			} 
-			if (speed == 1 || prefersReducedMotion) {
-				zoom = zoomTarget;
-				offsetX = offsetXTarget; 
-				offsetY = offsetYTarget;
-			} else {
-				zoom = p.lerp(zoom, zoomTarget, lerpSpeed);
-				offsetX = p.lerp(offsetX, offsetXTarget, lerpSpeed);
-				offsetY = p.lerp(offsetY, offsetYTarget, lerpSpeed);	
-			}
+		function centerAndZoomOnCoordinate(targetX, targetY, targetZoom, speed = 0.05) {
+		    // Ensure speed is valid
+		    speed = Math.min(Math.max(speed, 0), 1); // Clamp speed between 0 and 1
+
+		    // Set the target zoom and offsets
+		    zoomTarget = targetZoom;
+		    offsetXTarget = p.width / 2 - targetX * zoomTarget;
+		    offsetYTarget = p.height / 2 - targetY * zoomTarget;
+
+		    // Adjust parameters based on conditions
+		    if (currentStageNumber === 0) {
+		        maxSpeed = 15;
+		        maxForce = 100;
+		    } else if (zoomedGuidedTour || userControl) {
+		        maxSpeed = 7;
+		        maxForce = 100;
+		    } else {
+		        maxSpeed = 8;
+		        maxForce = 100;
+		    }
+
+		    // Handle immediate transitions for reduced motion or speed set to 1
+		    if (speed === 1 || prefersReducedMotion) {
+		        zoom = zoomTarget;
+		        offsetX = offsetXTarget;
+		        offsetY = offsetYTarget;
+		    } else {
+		        // Smoothly transition zoom and offsets using the specified speed
+		        zoom = smoothTransition(zoom, zoomTarget, speed);
+		        offsetX = smoothTransition(offsetX, offsetXTarget, speed);
+		        offsetY = smoothTransition(offsetY, offsetYTarget, speed);
+		    }
 		}
 
 		// Function to check if mouse is over the p5.js canvas
@@ -381,57 +381,60 @@
 		    // Return true if the element is the p5.js canvas
 			return element === p.canvas;
 		}
+
+
 		let isDragging = false;
 		let hasDragged = false;
 
 		// Handle zooming with mouse wheel
-	p.mouseWheel = (event) => {
-    if (!isMouseOverCanvas()) return;
-    userControl = true;
-    explored = true;
+		p.mouseWheel = (event) => {
+		    if (!isMouseOverCanvas()) return;
 
-    let scrollVelocity = Math.abs(event.delta);
-    let baseZoomSpeed = 0.05 * zoom;
-    let zoomSpeed = baseZoomSpeed * (scrollVelocity / 100);
+		    userControl = true;
+		    explored = true;
 
-    let previousZoom = zoom;
+		    const previousZoom = zoom;
 
-    if (event.delta > 0 && zoom > zoomMinMax[0]) {
-        zoom = p.constrain(zoom - zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
-    } else if (event.delta < 0 && zoom < zoomMinMax[1]) {
-        zoom = p.constrain(zoom + zoomSpeed, zoomMinMax[0], zoomMinMax[1]);
-    }
+		    // Calculate zoom change based on scroll delta
+		    const zoomFactor = 1.1; // Multiplier for zoom-in and zoom-out
+		    if (event.delta > 0) {
+		        // Zoom out
+		        zoom = p.constrain(zoom / zoomFactor, zoomMinMax[0], zoomMinMax[1]);
+		    } else if (event.delta < 0) {
+		        // Zoom in
+		        zoom = p.constrain(zoom * zoomFactor, zoomMinMax[0], zoomMinMax[1]);
+		    }
 
-    let zoomChange = zoom / previousZoom;
-
-    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
-    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
-};
+		    // Adjust offset to keep the mouse position fixed
+		    const zoomChange = zoom / previousZoom;
+		    offsetX = p.mouseX - (p.mouseX - offsetX) * zoomChange;
+		    offsetY = p.mouseY - (p.mouseY - offsetY) * zoomChange;
+		};
 
 
 		// Handle panning with mouse drag
 		p.mousePressed = () => {
-    if (!isMouseOverCanvas()) return;
+			if (!isMouseOverCanvas()) return;
 
-    startX = p.mouseX - offsetX;
-    startY = p.mouseY - offsetY;
-    isDragging = true; // Start dragging
-    hasDragged = false; // Reset drag flag
-    hoveredCircle = null;
-};
+			startX = p.mouseX - offsetX;
+			startY = p.mouseY - offsetY;
+		    isDragging = true; // Start dragging
+		    hasDragged = false; // Reset drag flag
+		    hoveredCircle = null;
+		};
 
-p.mouseDragged = () => {
-    if (!isMouseOverCanvas()) return;
-    userControl = true;
-    explored = true;
+		p.mouseDragged = () => {
+			if (!isMouseOverCanvas()) return;
+			userControl = true;
+			explored = true;
 
-    offsetX = p.mouseX - startX;
-    offsetY = p.mouseY - startY;
-    hasDragged = true; // Mark that dragging occurred
-};
+			offsetX = p.mouseX - startX;
+			offsetY = p.mouseY - startY;
+		    hasDragged = true; // Mark that dragging occurred
+		};
 
-p.mouseReleased = () => {
-    if (!isDragging) return;
+		p.mouseReleased = () => {
+			if (!isDragging) return;
 
     isDragging = false; // Stop dragging
     if (!hasDragged && hoveredCircle && copy.story[currentStageNumber].stage === "explore") {
@@ -441,41 +444,41 @@ p.mouseReleased = () => {
 };
 
 
-		let isTouchDragging = false;
+let isTouchDragging = false;
 let hasTouchDragged = false;
 let pinchZooming = false;
 let wasPinching = false;
 
 // Handle touch start
 p.touchStarted = () => {
-    userControl = true;
+	userControl = true;
 
-    if (!isMouseOverCanvas()) return;
+	if (!isMouseOverCanvas()) return;
 
-    if (p.touches.length === 1 && !pinchZooming) {
+	if (p.touches.length === 1 && !pinchZooming) {
         // Single touch for panning
-        startX = p.touches[0].x - offsetX;
-        startY = p.touches[0].y - offsetY;
+		startX = p.touches[0].x - offsetX;
+		startY = p.touches[0].y - offsetY;
         isTouchDragging = true;   // Start dragging
         hasTouchDragged = false;  // Reset drag flag
     } else if (p.touches.length === 2) {
         // Two touches for pinch zoom
-        pinchZooming = true;
-        wasPinching = true;
-        explored = true;
-        previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+    	pinchZooming = true;
+    	wasPinching = true;
+    	explored = true;
+    	previousDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
     }
 };
 
 // Handle touch move (dragging or pinch zoom)
 p.touchMoved = () => {
-    if (!isMouseOverCanvas()) return false;
-    userControl = true;
+	if (!isMouseOverCanvas()) return false;
+	userControl = true;
 
-    if (p.touches.length === 1) {
-        if (pinchZooming) {
-            startX = p.touches[0].x - offsetX;
-            startY = p.touches[0].y - offsetY;
+	if (p.touches.length === 1) {
+		if (pinchZooming) {
+			startX = p.touches[0].x - offsetX;
+			startY = p.touches[0].y - offsetY;
             pinchZooming = false; // Exit pinch zoom mode
         }
         // Pan with single finger swipe
@@ -483,26 +486,26 @@ p.touchMoved = () => {
         offsetY = p.touches[0].y - startY;
         hasTouchDragged = true; // Mark as dragging occurred
     } else if (p.touches.length === 2) {
-        let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+    	let currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
 
-        if (previousDistance) {
-            let zoomChange = currentDistance / previousDistance;
-            let newZoom = zoom * zoomChange;
+    	if (previousDistance) {
+    		let zoomChange = currentDistance / previousDistance;
+    		let newZoom = zoom * zoomChange;
 
             // Only allow zooming within constraints
-            if (newZoom >= zoomMinMax[0] && newZoom <= zoomMinMax[1]) {
-                zoom = newZoom;
+    		if (newZoom >= zoomMinMax[0] && newZoom <= zoomMinMax[1]) {
+    			zoom = newZoom;
 
-                let midX = (p.touches[0].x + p.touches[1].x) / 2;
-                let midY = (p.touches[0].y + p.touches[1].y) / 2;
+    			let midX = (p.touches[0].x + p.touches[1].x) / 2;
+    			let midY = (p.touches[0].y + p.touches[1].y) / 2;
 
-                offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
-                offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
-            }
-        }
+    			offsetX = (midX - offsetX) * (1 - zoomChange) + offsetX;
+    			offsetY = (midY - offsetY) * (1 - zoomChange) + offsetY;
+    		}
+    	}
 
-        previousDistance = currentDistance;
-        pinchZooming = true;
+    	previousDistance = currentDistance;
+    	pinchZooming = true;
     }
 
     return false; // Prevent default behavior
@@ -510,15 +513,15 @@ p.touchMoved = () => {
 
 // Handle touch end
 p.touchEnded = () => {
-    userControl = true;
+	userControl = true;
 
-    if (p.touches.length === 1 && wasPinching) {
-        startX = p.touches[0].x - offsetX;
-        startY = p.touches[0].y - offsetY;
-        wasPinching = false;
-    }
+	if (p.touches.length === 1 && wasPinching) {
+		startX = p.touches[0].x - offsetX;
+		startY = p.touches[0].y - offsetY;
+		wasPinching = false;
+	}
 
-    if (!hasTouchDragged && !pinchZooming && hoveredCircle && copy.story[currentStageNumber].stage === "explore") {
+	if (!hasTouchDragged && !pinchZooming && hoveredCircle && copy.story[currentStageNumber].stage === "explore") {
         searchValue = hoveredCircle.obj.OCCUPATION; // Only update if no dragging or pinch zoom occurred
     }
 
@@ -529,67 +532,75 @@ p.touchEnded = () => {
     hoveredCircle = null;
 };
 
-		let resizeTimeout;
+let resizeTimeout;
 
-		p.windowResized = () => {
-			resize();
-		};
+p.windowResized = debounce(() => {
+	resize();
+}, 100);
 
-		function resize() {
-			if (p.windowWidth < 860) {
-				w = p.windowWidth;
-				h = p.windowHeight - marginBottom + 20;
-				marginTop = 70;
-			} else {
-				w = p.windowWidth - 370;
-				h = p.windowHeight;
-				marginTop = 60;
-			}
-			
-			dotSize = 7;
-			if (p.windowWidth < 1500) {
-				dotSize = 6;
-			}
-			if (p.windowWidth < 860) {
-				dotSize = 5;
-			}
-			if (p.windowWidth < 500) {
-				dotSize = w/150;
-			}
+function debounce(func, delay) {
+	let timeout;
+	return (...args) => {
+		clearTimeout(timeout);
+		timeout = setTimeout(() => func(...args), delay);
+	};
+}
 
-			p.resizeCanvas(w, h);
+function resize() {
+	if (p.windowWidth < 860) {
+		w = p.windowWidth;
+		h = p.windowHeight - marginBottom + 20;
+		marginTop = 70;
+	} else {
+		w = p.windowWidth - 370;
+		h = p.windowHeight;
+		marginTop = 60;
+	}
 
-			clearTimeout(resizeTimeout);
+	dotSize = w/250;
+	if (p.windowWidth < 1300) {
+		dotSize = 6;
+	}
+	if (p.windowWidth < 860) {
+		dotSize = 5;
+	}
+	if (p.windowWidth < 500) {
+		dotSize = w/150;
+	}
 
-			resizeTimeout = setTimeout(() => {
-				for (let i = 0; i < circles.length; i++) {
-					circles[i].updateGroup();
-				}
-			}, 100);
+	p.resizeCanvas(w, h);
+
+	clearTimeout(resizeTimeout);
+
+	resizeTimeout = setTimeout(() => {
+		for (let i = 0; i < circles.length; i++) {
+			circles[i].updateGroup();
 		}
+	}, 100);
+}
 
-		class Circle {
-			constructor(obj, index) {
-				this.obj = obj;
-				this.index = index;
-				this.radius = this.calculateOptimalSquareDimensions(obj.dots / divider, dotSize);
-				if (obj.OCCUPATION == "You" || obj.OCCUPATION == "Sitter avg." || obj.OCCUPATION == "Stander avg.") {
-					this.radius = 30;
-				}
-				this.currentColors = Array(this.obj.dots).fill(p.color("#523c50"));
-				this.center = p.createVector(
-					p.random(this.radius, w - this.radius),
-					p.random(-10,-h),
-					);
-				this.velocity = p.createVector(0, 0);
-				this.acceleration = p.createVector(0, 0);
-				this.target = this.center.copy();
-				this.peoplePositions = this.calculatePeoplePositions(obj.dots / divider);
-				this.hovered = false;
-				this.maxSpeed = 1;
-				this.maxForce = 1;
-				this.score = 0;
-				this.textDisplayed = false;
+class Circle {
+	constructor(obj, index) {
+		this.obj = obj;
+		this.index = index;
+		this.radius = this.calculateOptimalSquareDimensions(obj.dots / divider, dotSize);
+		if (obj.OCCUPATION == "You" || obj.OCCUPATION == "Sitter avg." || obj.OCCUPATION == "Stander avg.") {
+			this.radius = 30;
+		}
+		this.currentColors = Array(this.obj.dots).fill(p.color("#523c50"));
+		this.center = p.createVector(
+			p.random(this.radius, w - this.radius),
+			p.random(-10,-h),
+			);
+		this.velocity = p.createVector(0, 0);
+		this.acceleration = p.createVector(0, 0);
+		this.target = this.center.copy();
+		this.peoplePositions = this.calculatePeoplePositions(obj.dots / divider);
+		this.hovered = false;
+		this.maxSpeed = 1;
+		this.maxForce = 1;
+		this.score = 0;
+		this.textDisplayed = false;
 				this.varPct = 0; // Initialize varPct
 				this.targetVarPct = 0;
         		this.prevVarPct = 0; // Initialize previous varPct
@@ -646,7 +657,7 @@ p.touchEnded = () => {
 
 
 			updatePeoplePositions(newCenter) {
-			    let gridSize = Math.ceil(Math.sqrt(this.peoplePositions.length));
+				let gridSize = Math.ceil(Math.sqrt(this.peoplePositions.length));
 			    let spacing = dotSize * 0.6; // Tighter spacing between dots
 
 			    let startX = newCenter.x - ((gridSize - 1) / 2) * spacing; // Center the grid horizontally
@@ -664,12 +675,12 @@ p.touchEnded = () => {
 
 			    let dotsPlaced = 0;
 			    for (let row = 0; row < gridSize && dotsPlaced < this.peoplePositions.length; row++) {
-			        for (let col = 0; col < gridSize && dotsPlaced < this.peoplePositions.length; col++) {
-			            let x = startX + col * spacing;
-			            let y = startY + row * spacing;
-			            this.peoplePositions[dotsPlaced] = p.createVector(x, y);
-			            dotsPlaced++;
-			        }
+			    	for (let col = 0; col < gridSize && dotsPlaced < this.peoplePositions.length; col++) {
+			    		let x = startX + col * spacing;
+			    		let y = startY + row * spacing;
+			    		this.peoplePositions[dotsPlaced] = p.createVector(x, y);
+			    		dotsPlaced++;
+			    	}
 			    }
 			}
 
@@ -706,8 +717,11 @@ p.touchEnded = () => {
 			update() {
 				this.maxSpeed = maxSpeed;
 				this.maxForce = maxForce;
-				this.radius = this.calculateOptimalSquareDimensions(this.obj.dots / divider, dotSize);
-				this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
+				if (this.previousDots !== this.obj.dots) {
+					this.radius = this.calculateOptimalSquareDimensions(this.obj.dots / divider, dotSize);
+					this.peoplePositions = this.calculatePeoplePositions(this.obj.dots / divider);
+					this.previousDots = this.obj.dots;
+				}
 
 				if (this.obj.OCCUPATION == "You") {
 					this.radius = 30;
@@ -888,61 +902,67 @@ p.touchEnded = () => {
 					}
 
 					p.square(this.center.x - this.radius/2, this.center.y - this.radius/2, this.radius, this.radius/3, this.radius/3, this.radius/3, this.radius/3);	
-			        const transitionSpeed = 0.3; // Smooth transition speed
-			        const filledColor = p.color("#ff69f2");
-			        const unfilledColor = p.color("#523c50");
+					const filledColor = p.color("#ff69f2");
+					const unfilledColor = p.color("#523c50");
 
 					// Calculate how many dots to fill based on smoothed varPct
-			        let dotsToFill = this.obj.dots / divider * (this.varPct / 100);
+					let dotsToFill = this.obj.dots / divider * (this.varPct / 100);
 
 					// Display each dot with smooth color transitions
-			        for (let i = 0; i < this.peoplePositions.length; i++) {
-			        	p.noStroke();
+					for (let i = 0; i < this.peoplePositions.length; i++) {
+						p.noStroke();
 
 					    // Set the fill to unfilledColor to draw the background circle first
-			        	p.fill(unfilledColor);
-			        	if (i < Math.floor(dotsToFill)) {
-			        		p.image(standerGifs[this.personTypeStander[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/1.3, dotSize, dotSize);
-			        	} else {
-			        		p.image(sitterGifs[this.personTypeSitter[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/1.3, dotSize, dotSize);
-			        	}
-			        }
-			    }
+						p.fill(unfilledColor);
+						if (i < Math.floor(dotsToFill)) {
+							p.image(standerGifs[this.personTypeStander[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/1.3, dotSize, dotSize);
+						} else {
+							p.image(sitterGifs[this.personTypeSitter[i]], this.peoplePositions[i].x - dotSize/2, this.peoplePositions[i].y - dotSize/1.3, dotSize, dotSize);
+						}
+					}
+				}
 			}
 
 			checkTextOverlap(otherCircles) {
-			    // Approximate text height and width based on zoom and font size
-				let scaledFontSize = h / 12 / zoom * 2;
-				if (guidedTour && zoomedGuidedTour) {
-					scaledFontSize = h / 10 / zoom;
-				}
-
-			    const avgCharWidth = 7; // Assume an average character width for optimization
-			    const textWidth = avgCharWidth * this.obj.OCC_SHORT.length / zoom; // Approximate text width
+			    // Calculate text dimensions
+				const scaledFontSize = (guidedTour && zoomedGuidedTour) ? h / 10 / zoom : h / 12 / zoom * 2;
+			    const avgCharWidth = 7; // Approximation for average character width
+			    const textWidth = avgCharWidth * this.obj.OCC_SHORT.length / zoom;
 			    const textHeight = scaledFontSize;
 
-			    // Position the text centered above the circle
-			    const leftX = this.center.x - textWidth / 2;
-			    const rightX = this.center.x + textWidth / 2;
-			    const topY = this.center.y - this.radius / 2 - (3 / zoom) - textHeight;
-			    const bottomY = topY + textHeight;
+			    // Bounding box for this circle's text
+			    const thisTextBounds = {
+			    	left: this.center.x - textWidth / 2,
+			    	right: this.center.x + textWidth / 2,
+			    	top: this.center.y - this.radius / 2 - (3 / zoom) - textHeight,
+			    	bottom: this.center.y - this.radius / 2 - (3 / zoom)
+			    };
 
-			    // Check for overlap with other circles' text using simple bounding box collision
+			    // Check for overlap with other circles' text
 			    for (let other of otherCircles) {
-			        if (other === this || !other.textDisplayed) continue; // Skip itself or non-displayed texts
+			        if (other === this || !other.textDisplayed) continue; // Skip itself and hidden texts
 
+			        // Calculate other circle's text dimensions
 			        const otherTextWidth = avgCharWidth * other.obj.OCC_SHORT.length / zoom;
-			        const otherLeftX = other.center.x - otherTextWidth / 2;
-			        const otherRightX = other.center.x + otherTextWidth / 2;
-			        const otherTopY = other.center.y - other.radius / 2 - (3 / zoom) - textHeight;
-			        const otherBottomY = otherTopY + textHeight;
+			        const otherTextBounds = {
+			        	left: other.center.x - otherTextWidth / 2,
+			        	right: other.center.x + otherTextWidth / 2,
+			        	top: other.center.y - other.radius / 2 - (3 / zoom) - textHeight,
+			        	bottom: other.center.y - other.radius / 2 - (3 / zoom)
+			        };
 
-			        // Approximate overlap check using bounding boxes
-			        if (leftX < otherRightX && rightX > otherLeftX && topY < otherBottomY && bottomY > otherTopY) {
-			            return true; // Early exit if overlap is detected
+			        // Check if bounding boxes overlap
+			        const isOverlapping =
+			        thisTextBounds.left < otherTextBounds.right &&
+			        thisTextBounds.right > otherTextBounds.left &&
+			        thisTextBounds.top < otherTextBounds.bottom &&
+			        thisTextBounds.bottom > otherTextBounds.top;
+
+			        if (isOverlapping) {
+			            return true; // Overlap detected
 			        }
 			    }
-			    
+
 			    return false; // No overlap
 			}
 
@@ -962,27 +982,31 @@ p.touchEnded = () => {
 			    const varPctThreshold = 20; // Threshold for varPct when currentVar is not empty
 
 			    if (this.obj[currentVar] > 30 && (bg == "all") || ((this.xValue > minmax[1] / 2 && bg == "stand") || (this.xValue < minmax[1] / 2 && bg == "sit"))) {
-			        prioritizeVarPct = true;
+			    	prioritizeVarPct = true;
 			    } else if (!currentVar || this.hovered) {
-			        prioritizeVarPct = true;
+			    	prioritizeVarPct = true;
 			    }
 
 			    // Always show text if hovered, regardless of searchValue
 			    let shouldDisplayText = this.hovered || 
-			        (searchValue !== "" && searchValue === this.obj.OCCUPATION) || 
-			        this.obj.yellow ||
-			        highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1 || 
-			        (prioritizeVarPct && (
-			            (this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
-			            (!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
-			        ));
+			    (searchValue !== "" && searchValue === this.obj.OCCUPATION) || 
+			    this.obj.yellow ||
+			    highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1 || 
+			    (prioritizeVarPct && (
+			    	(this.radius > 10 && !this.checkTextOverlap(otherCircles)) || 
+			    	(!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
+			    	));
+
+			    if (this.target.x/w < 160/w && Math.abs( (this.target.y/h) - 0.5 ) < .1 && currentVar) {
+			    	shouldDisplayText = false;
+			    }
 
 			    if (shouldDisplayText) {
-			        if (this.alpha < maxAlpha - overlapThreshold) {
+			    	if (this.alpha < maxAlpha - overlapThreshold) {
 			            this.alpha = Math.min(this.alpha + fadeSpeed, maxAlpha); // Fade in
 			        }
 			    } else {
-			        if (this.alpha > overlapThreshold) {
+			    	if (this.alpha > overlapThreshold) {
 			            this.alpha = Math.max(this.alpha - fadeSpeed, 0); // Fade out more gradually
 			        } else {
 			            this.alpha = 0; // Set to fully transparent if too low
@@ -994,31 +1018,31 @@ p.touchEnded = () => {
 			    	if (searchValue === this.obj.OCCUPATION) {
 			    		p.fill("#ffffff");
 			    	} else if (this.obj.yellow) {
-			            hlYellow.setAlpha(this.alpha);
-			            p.fill(hlYellow);
-			        } else {
-			            labelPurple.setAlpha(this.alpha);
-			            p.fill(labelPurple);
-			        }
+			    		hlYellow.setAlpha(this.alpha);
+			    		p.fill(hlYellow);
+			    	} else {
+			    		labelPurple.setAlpha(this.alpha);
+			    		p.fill(labelPurple);
+			    	}
 
-			        const maxTextWidth = 100 / zoom;
-			        const scaledFontSize = 12 / zoom;
-			        p.textSize(scaledFontSize);
-			        p.textAlign(p.CENTER, p.BOTTOM);
+			    	const maxTextWidth = 100 / zoom;
+			    	const scaledFontSize = 12 / zoom;
+			    	p.textSize(scaledFontSize);
+			    	p.textAlign(p.CENTER, p.BOTTOM);
 
-			        let xPos = this.center.x;
-			        let yPos = this.center.y - this.radius / 2;
-			        if (this.obj.yellow) {
-			             yPos = this.center.y - this.radius / 4;
-			        }
-			        p.stroke("#150317");
-			        p.smooth();
-			        p.strokeWeight(5 / zoom);
+			    	let xPos = this.center.x;
+			    	let yPos = this.center.y - this.radius / 2;
+			    	if (this.obj.yellow) {
+			    		yPos = this.center.y - this.radius / 4;
+			    	}
+			    	p.stroke("#150317");
+			    	p.smooth();
+			    	p.strokeWeight(5 / zoom);
 
 			        // Display text regardless of searchValue if hovered
-			        if (this.hovered || searchValue === "" || this.obj.yellow || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
-			            p.text(this.obj.OCC_SHORT, xPos, yPos);
-			        }
+			    	if (this.hovered || searchValue === "" || this.obj.yellow || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {
+			    		p.text(this.obj.OCC_SHORT, xPos, yPos);
+			    	}
 
 			        this.textDisplayed = true; // Mark text as displayed
 			    } else {

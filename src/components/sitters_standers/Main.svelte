@@ -121,10 +121,9 @@
 	    // Step 1: Collect all the scores
 		let scoresWithIndices = [];
 		let nudgeDirection = 1, nudgeAmount = 0;
-
 		data.forEach((item, i) => {
 			item.score = 0;
-			if (item.OCC_SHORT === "YOU" && item[currentVar] === undefined && copy.story[currentStageNumber].hl !== undefined) {
+			if (item.OCC_SHORT === "YOU" && selectedStandingPct == -1) {
 				item.score = -1;
 			} else if (copy.story[currentStageNumber].hl === undefined) {
 				if (item.yellow) {
