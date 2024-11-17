@@ -25,5 +25,5 @@
 	}
 </script>
 
-<Header {currentStageNumber} {introActive} {stage}/>
+<!-- <Header {currentStageNumber} {introActive} {stage}/> -->
 <Sitters_Standers {headervars} {copy} data={filteredData} {x_axis_variable} bind:introActive bind:currentStageNumber />
