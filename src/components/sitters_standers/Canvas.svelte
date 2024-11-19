@@ -199,11 +199,9 @@
 			p.textSize(14/zoom);
 			if (currentStageNumber !== 0) {
 				p.fill("#eba800");
-       			 // Function to set stroke color based on bgType
-				const getStrokeColor = () => (bgType === "sit" || bgType === "stand" ? hlcolor : "#150317");
 
         		// Draw arrows and labels with adjusted alignment and stroke color
-				p.stroke(getStrokeColor());
+				p.stroke("#150317");
 				p.textAlign(p.RIGHT);
 				p.text("←", w / 2 - (79 / zoom), 23 / zoom);
 

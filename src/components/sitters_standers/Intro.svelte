@@ -94,7 +94,7 @@
 	}
 
 	function searchJob(j) {
-	    nodatashown = false;
+		nodatashown = false;
 	    searchValue = j.map(obj => obj.text).join(''); // Update searchValue from selected item
 	    query = searchValue; // Sync input box with searchValue
 	    searchIndex = data.findIndex(obj => obj.OCCUPATION === searchValue);
@@ -105,7 +105,7 @@
 
 	
 	function inputFocus() {
-	    isInputFocused = true;
+		isInputFocused = true;
 	    query = "";        // Clear the input box
 	    searchValue = "";  // Clear searchValue
 	    searchShown = true;
@@ -113,11 +113,11 @@
 
 	// Function to handle input focus
 	function handleInputFocus() {
-	    isInputFocused = true;
+		isInputFocused = true;
 	}
 
 	function handleInputBlur() {
-	    isInputFocused = false;
+		isInputFocused = false;
 	    searchValue = query; // Sync searchValue with query on blur
 	}
 
@@ -165,7 +165,7 @@
 	});
 	$: {
 		if (searchValue !== query && !isInputFocused) {
-		    query = searchValue;
+			query = searchValue;
 		}
 		isNextDisabled = 
 		(questionNumber === 1 && selectedStandingPct === undefined) || 
@@ -278,30 +278,36 @@
 {#if !introActive && copy.story[currentStageNumber].stage == "explore"}
 <div class="panel jobSearch">
 	<input 
-	    bind:value={query} 
-	    on:focus={inputFocus} 
-	    on:blur={handleInputBlur} 
-	    placeholder="Search job titles..."
+	bind:value={query} 
+	on:focus={inputFocus} 
+	on:blur={handleInputBlur} 
+	placeholder="Search job titles..."
 	/>
 	<Fuzzy {query} {data} {options} bind:formatted />
 
 	{#if searchShown}
-		{#each formatted.slice(0, 4) as item}
-			{#each item as line}
-			<button class="answerItem" on:click={() => searchJob(line)}>
-				{#each line as { matches, text }}
-					{text}
-				{/each}
-			</button>
-			{/each}
+	{#each formatted.slice(0, 4) as item}
+	{#each item as line}
+	<button class="answerItem" on:click={() => searchJob(line)}>
+		{#each line as { matches, text }}
+		{text}
 		{/each}
+	</button>
+	{/each}
+	{/each}
 	{/if}
 	{#if nodatashown}
-		<div class="nodata">
-			&#9888; This job doesn't have data for this variable. Choose another job or variable.
-		</div>
+	<div class="nodata">
+		&#9888; This job doesn't have data for this variable. Choose another job or variable.
+	</div>
 	{/if}
 </div>
+{/if}
+
+{#if introActive}
+{#if questionOrder[questionNumber] == "intro"}
+<div class="videoTeaser"><a href="https://www.youtube.com/@thepudding">Want a video story instead? Click here.</a></div>
+{/if}
 {/if}
 <style>
 	
@@ -493,5 +499,30 @@
 	top:  -50px;
 	left:  5%;
 	width:  95%;
+}
+
+.videoTeaser {
+	position: fixed;
+	color: white;
+	bottom: 20px;
+/* 	font-style:  italic; */
+/* 	background:  black; */
+	left: 50%;
+	transform: translateX(-50%);
+	text-align: center;
+	padding: 20px;
+	max-width: 500px;
+	width: 90%;
+	z-index: 99999;
+}
+.videoTeaser a {
+	text-decoration: none !important;
+	background:  var(--color-lessdark-purple);
+	padding:  9px;
+	border-radius:  4px;
+	color:  var(--color-lighter-purple) !important;
+}
+.videoTeaser a:hover {
+	background:  #522f52;
 }
 </style>

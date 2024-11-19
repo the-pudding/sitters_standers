@@ -175,13 +175,13 @@
 		};
 
 		function averageLine() {
-			// if (currentStageNumber >= showAverageStage) {
-			// 	// p.stroke(255, 0, 251,160);
-			// 	hlYellow.setAlpha(200);
-			// 	p.stroke(hlYellow);
-			// 	p.strokeWeight(0.8/zoom);
-			// 	p.line(circles[circles.length-2].center.x,circles[circles.length-2].center.y,circles[circles.length-3].center.x, circles[circles.length-3].center.y);
-			// }
+			if (currentStageNumber >= showAverageStage) {
+				// p.stroke(255, 0, 251,160);
+				hlYellow.setAlpha(200);
+				p.stroke(hlYellow);
+				p.strokeWeight(0.8/zoom);
+				p.line(circles[circles.length-2].center.x,circles[circles.length-2].center.y,circles[circles.length-3].center.x, circles[circles.length-3].center.y);
+			}
 		}
 
 		function axisLines() {
@@ -196,24 +196,26 @@
 
 
 		function axisLabels() {
+			p.strokeCap(p.ROUND);
 			if (currentStageNumber > 1) {
-				p.textSize(20/zoom);
+				p.textSize(30/zoom);
 				if (currentStageNumber !== 0) {
 					p.fill("#eba800");
+					p.stroke("#150317");
        			 // Function to set stroke color based on bgType
 					const getStrokeColor = () => (bgType === "sit" || bgType === "stand" ? hlcolor : "#150317");
 
         		// Draw arrows and labels with adjusted alignment and stroke color
-					p.stroke(getStrokeColor());
+					// p.stroke(getStrokeColor());
 					p.textAlign(p.RIGHT);
-					p.text("←", w / 2 - (99 / zoom), 23 / zoom);
+					p.text("←", w / 2 - (130 / zoom), 23 / zoom);
 
 					p.textAlign(p.LEFT);
-					p.text("→", w / 2 + (117 / zoom), 23 / zoom);
+					p.text("→", w / 2 + (160 / zoom), 23 / zoom);
 
 					if (axis_variable !== -1) {
 						p.text("↑", 0, h / 2 - (5 / zoom));
-						p.text("↓", 0, h / 2 + (30 / zoom));
+						p.text("↓", 0, h / 2 + (40 / zoom));
 					}
 
         		// Set font for "Sitters" and "Standers" labels
@@ -226,7 +228,7 @@
 
 					if (axis_variable !== -1) {
 						p.text("   More " + axis_variable, 3, h / 2 - (5 / zoom));
-						p.text("   Less " + axis_variable, 3, h / 2 + (30 / zoom));
+						p.text("   Less " + axis_variable, 3, h / 2 + (40 / zoom));
 					}
 				}
 			}
@@ -952,7 +954,7 @@ class Circle {
 
 			checkTextOverlap(otherCircles) {
 			    // Calculate text dimensions
-				const scaledFontSize = (guidedTour && zoomedGuidedTour) ? h / 10 / zoom : h / 10 / zoom * 4;
+				const scaledFontSize = (guidedTour && zoomedGuidedTour) ? h / 10 / zoom : h / 10 / zoom * 3.5;
 			    const avgCharWidth = 7*2; // Approximation for average character width
 			    const textWidth = avgCharWidth * this.obj.OCC_SHORT.length / zoom;
 			    const textHeight = scaledFontSize;
@@ -1025,7 +1027,7 @@ class Circle {
 			    	(!this.checkTextOverlap(otherCircles) && (guidedTour || zoomedGuidedTour))
 			    	));
 
-			    if (this.target.x/w < 160/w && Math.abs( (this.target.y/h) - 0.5 ) < .1) {
+			    if (currentVar != undefined && this.target.x/w < 0.5 && Math.abs( (this.target.y/h) - 0.5 ) < .1 && !this.obj.yellow) {
 			    	shouldDisplayText = false;
 			    }
 
@@ -1053,8 +1055,8 @@ class Circle {
 			    		p.fill(labelPurple);
 			    	}
 
-			    	const maxTextWidth = 100 / zoom;
-			    	const scaledFontSize = 20 / zoom;
+			    	const maxTextWidth = 130 / zoom;
+			    	const scaledFontSize = 26 / zoom;
 			    	p.textSize(scaledFontSize);
 			    	p.textAlign(p.CENTER, p.BOTTOM);
 
@@ -1065,7 +1067,8 @@ class Circle {
 			    	}
 			    	p.stroke("#150317");
 			    	p.smooth();
-			    	p.strokeWeight(5 / zoom);
+			    	p.strokeCap(p.ROUND);
+			    	p.strokeWeight(10 / zoom);
 
 			        // Display text regardless of searchValue if hovered
 			    	if (this.hovered || searchValue === "" || this.obj.yellow || (searchValue === this.obj.OCCUPATION && data[this.index].score !== -1) || highlightedJobs.indexOf(this.obj.OCCUPATION) !== -1) {

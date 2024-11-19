@@ -88,14 +88,14 @@
 	}
 
 	
-	// setInterval(function() {
-	// 	timestamp+=1;
-	// 	if (Number(copy.story[currentStageNumber+1].time) == timestamp) {
-	// 		button(1);
-	// 	}
+	setInterval(function() {
+		timestamp+=1;
+		if (Number(copy.story[currentStageNumber+1].time) == timestamp) {
+			button(1);
+		}
 		
-	// 	console.log(timestamp, copy.story[currentStageNumber+1].time)
-	// }, 1000);
+		console.log(timestamp, copy.story[currentStageNumber+1].time)
+	}, 1000);
 
 	// Add and remove event listeners when component mounts and unmounts
 	onMount(() => {
