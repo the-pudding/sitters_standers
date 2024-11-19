@@ -306,7 +306,7 @@
 
 {#if introActive}
 {#if questionOrder[questionNumber] == "intro"}
-<div class="videoTeaser"><a href="https://www.youtube.com/@thepudding">Want a video story instead? Click here.</a></div>
+<div class="videoTeaser"><a href="https://www.youtube.com/watch?v=sE_Ew0Be4qE">Want a video story instead? Click here.</a></div>
 {/if}
 {/if}
 <style>
