@@ -491,6 +491,7 @@
 		display: block;
 		font-size: 9px;
 		position: relative;
+		pointer-events: none;
 /* 		background:  black; */
 /* 		background: var(--color-dark-purple); */
 }
