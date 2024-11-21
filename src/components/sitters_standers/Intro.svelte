@@ -492,8 +492,6 @@
 		font-size: 9px;
 		position: relative;
 		pointer-events: none;
-/* 		background:  black; */
-/* 		background: var(--color-dark-purple); */
 }
 .introImage img {
 	position: absolute;
@@ -506,8 +504,6 @@
 	position: fixed;
 	color: white;
 	bottom: 20px;
-/* 	font-style:  italic; */
-/* 	background:  black; */
 	left: 50%;
 	transform: translateX(-50%);
 	text-align: center;
