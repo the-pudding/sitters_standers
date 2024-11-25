@@ -22,6 +22,7 @@
 	$: {
 		stage = copy.story[currentStageNumber].stage;
 		currentStageNumber, stage;
+		
 	}
 </script>
 
